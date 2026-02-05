@@ -1,0 +1,18 @@
+# Eclipse workspace metadata
+/.metadata/
+.project
+.classpath
+/.settings/
+
+# IDE caches
+/.sonarlint/
+
+# Maven / Gradle
+**/target/
+/build/
+
+# Environment variables
+.env
+
+# Logs
+*.log
