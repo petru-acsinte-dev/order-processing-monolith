@@ -90,4 +90,5 @@ INSERT INTO orders.currencies (id, currency) VALUES
 INSERT INTO orders.status (id, status) VALUES
 	(0, 'CREATED'), 
 	(1, 'CANCELLED'), 
-	(2, 'CONFIRMED');
+	(2, 'CONFIRMED'),
+	(3, 'SHIPPED');
