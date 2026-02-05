@@ -4,10 +4,10 @@ User Story: Customer Order Management and Fulfillment Flow
 
 Actors
 ------
-*Customer*: A registered user who represents a single customer account and can place orders.  
-*Admin*: A system administrator who can manager users, products, orders and fulfillment (internal usage).  
-*Fulfillment service*: Responsible for preparing and packing orders.  
-*Shipment service*: Responsible for shipping and delivering the orders.
+*Customer*: A registered customer who can place and manage orders  
+*Admin*: An internal user who manages customers, products, orders, and fulfillment  
+*Fulfillment process*: Internal process responsible for preparing orders  
+*Shipping process*: Internal process responsible for shipping and delivery
 
 Preconditions
 -
