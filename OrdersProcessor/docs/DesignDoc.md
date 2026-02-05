@@ -58,7 +58,8 @@ However order lines preserve history for already created orders.
 Order: id (Long), externalId (UUID), customerExternalId, status, totalAmount (Money), createdAt  
 OrderLine: id (Long), orderId, productId, productName, unitPrice (Money), quantity, lineTotal (Money), createdAt  
 **Note**: productId is used because products and orders live in the same boundary. If products ever need to be separated, a productSKU attribute 
-can be added and populated before the migration. That productSKU will become the external identifier for products.  
+can be added and populated before the migration. That productSKU will become the external identifier for products.
+Temporary trade-offs: All prices in an order must use the same currency until a currency converter is implemented. Until then, an exception is thrown if a product is added to an order with a price currency different than the products already present in the order.
 Workflow:
 - Orders are created when the first product is selected
 - OrderLines snapshot product information and pricing
@@ -92,7 +93,8 @@ Sets the Order status to CANCELLED unless status is already SHIPPED.
 Reads confirmed orders via external ID. Packs products and sets status to READY_TO_SHIP.
 
 *g. Shipping*  
-Delivers and updates status to SHIPPED, tracks shipment and updates status to DELIVERED.
+Delivers and updates status to SHIPPED, tracks shipment and updates status to DELIVERED.  
+Needs to know the orders service that the order has been shipped, so cancellation is no longer possible.
 
 **4. ID Strategy**  
 - Internal long ids within boudaries (db PKs, internal joins, admin CRUD path variables, human readable operations)
