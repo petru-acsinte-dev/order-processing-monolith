@@ -29,4 +29,11 @@ public class UpdateCustomerUserRequest {
 		this.address = address;
 	}
 
+	@Override
+	public String toString() {
+		return "UpdateCustomerUserRequest [email="  //$NON-NLS-1$
+				+ email + ", address="  //$NON-NLS-1$
+				+ address + "]"; //$NON-NLS-1$
+	}
+
 }

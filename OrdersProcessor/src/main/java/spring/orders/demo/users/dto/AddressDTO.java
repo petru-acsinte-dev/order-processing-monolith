@@ -36,4 +36,10 @@ public class AddressDTO {
 		this.addressLine2 = addressLine2;
 	}
 
+	@Override
+	public String toString() {
+		return "AddressDTO [addressLine1=" + addressLine1  //$NON-NLS-1$
+				+ ", addressLine2=" + addressLine2 + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
 }

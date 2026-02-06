@@ -40,4 +40,11 @@ public class CreateCustomerUserRequest {
 		this.address = address;
 	}
 
+	@Override
+	public String toString() {
+		return "CreateCustomerUserRequest [username=" + username  //$NON-NLS-1$
+				+ ", email=" + email  //$NON-NLS-1$
+				+ ", address=" + address + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
 }

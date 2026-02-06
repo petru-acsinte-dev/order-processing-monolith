@@ -86,4 +86,15 @@ public class CustomerUserResponse {
 		this.address = address;
 	}
 
+	@Override
+	public String toString() {
+		return "CustomerUserResponse [externalId=" + externalId  //$NON-NLS-1$
+				+ ", username=" + username  //$NON-NLS-1$
+				+ ", email=" + email //$NON-NLS-1$
+				+ ", created=" + created  //$NON-NLS-1$
+				+ ", role=" + role  //$NON-NLS-1$
+				+ ", status=" + status  //$NON-NLS-1$
+				+ ", address=" + address + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
 }
