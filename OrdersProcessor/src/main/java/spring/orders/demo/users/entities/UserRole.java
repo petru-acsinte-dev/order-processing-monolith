@@ -1,0 +1,12 @@
+package spring.orders.demo.users.entities;
+
+public class UserRole {
+
+		private UserRole() {}
+
+		public static final String ADMIN = "ADMIN";
+		public static final short ADMIN_ID = 0;
+	    public static final String USER = "USER";
+	    public static final short USER_ID = 1;
+
+}

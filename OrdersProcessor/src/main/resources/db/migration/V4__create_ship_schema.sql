@@ -52,6 +52,6 @@ COMMENT ON COLUMN ship.shipment.shipped
 
 -- Initialize data
 INSERT INTO ship.status (id, status) VALUES
-	(0, 'CANCELLED'),
-	(1, 'READY_TO_SHIP'),
+	(0, 'READY_TO_SHIP'),
+	(1, 'CANCELLED'),
 	(2, 'SHIPPED');
