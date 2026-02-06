@@ -21,4 +21,4 @@ OrderProcessor - Daily journal
 - created CustomerUser and associated entities + Address embeddable to be flattened inside CustomerUser
 - created operation specific CustomerUser DTOs for creation, update and response to have explicit validation and accidental writes
 - created CustomerUserRepository interface with added capabilities to identify the user by username/email (fake login), external id (update/delete)
-- created CustomerUserService for user CRUD admin operations
+- created CustomerUserService for user CRUD admin operations; added logging (avoided PII) and custom exceptions with generic messages (avoid PII)
