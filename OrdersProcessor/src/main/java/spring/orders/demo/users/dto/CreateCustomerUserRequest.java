@@ -1,5 +1,6 @@
 package spring.orders.demo.users.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -7,10 +8,12 @@ import jakarta.validation.constraints.NotBlank;
 public class CreateCustomerUserRequest {
 
     @NotBlank
+    @Schema (example = "johndoe")
     private String username;
 
     @NotBlank
     @Email
+    @Schema(example = "johnd@order.processor.com")
     private String email;
 
     @Valid

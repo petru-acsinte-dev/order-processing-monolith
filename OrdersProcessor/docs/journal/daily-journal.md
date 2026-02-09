@@ -22,3 +22,11 @@ OrderProcessor - Daily journal
 - created operation specific CustomerUser DTOs for creation, update and response to have explicit validation and accidental writes
 - created CustomerUserRepository interface with added capabilities to identify the user by username/email (fake login), external id (update/delete)
 - created CustomerUserService for user CRUD admin operations; added logging (avoided PII) and custom exceptions with generic messages (avoid PII)
+
+2026-02-08
+-
+- created CustomerUserService unit tests with BDDMockito
+
+2026-02-09
+-
+- created CustomerUserController with CRUD methods for /users endpoint and rudimentary user authentication/authorization

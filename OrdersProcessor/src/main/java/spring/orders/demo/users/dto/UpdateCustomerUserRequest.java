@@ -1,5 +1,6 @@
 package spring.orders.demo.users.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +9,7 @@ public class UpdateCustomerUserRequest {
 
     @NotBlank
     @Email
+    @Schema(example = "johndoe@order.processing.com")
     private String email;
 
     @Valid

@@ -1,9 +1,11 @@
 package spring.orders.demo.users.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,9 +20,11 @@ import spring.orders.demo.users.entities.Role;
 import spring.orders.demo.users.entities.Status;
 import spring.orders.demo.users.entities.UserRole;
 import spring.orders.demo.users.entities.UserStatus;
+import spring.orders.demo.users.exceptions.DuplicateUserException;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 import spring.orders.demo.users.exceptions.UserAuthenticationFailure;
 import spring.orders.demo.users.exceptions.UserNotFoundException;
+import spring.orders.demo.users.exceptions.UserServiceException;
 import spring.orders.demo.users.mappers.AddressMapper;
 import spring.orders.demo.users.mappers.CustomerUserMapper;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
@@ -96,9 +100,10 @@ public class CustomerUserService {
 	 * Creates a new user. Requires admin role.
 	 * @param requestorIdentifier PII identifier for the admin user making the request (username <- recommended or email)
 	 * @param createRequest New users details wrapped in {@link CreateCustomerUserRequest}
+	 * @return The newly created user information.
 	 */
 	@Transactional
-	public void createUser(String requestorIdentifier, CreateCustomerUserRequest createRequest) {
+	public CustomerUserResponse createUser(String requestorIdentifier, CreateCustomerUserRequest createRequest) {
 		log.debug("Creating new user..."); //$NON-NLS-1$
 		checkIfAdmin(requestorIdentifier);
 
@@ -113,9 +118,22 @@ public class CustomerUserService {
 		final Role role = new Role(UserRole.USER_ID, UserRole.USER);
 		partialEntity.setRole(role);
 
+		partialEntity.setCreated(LocalDateTime.now());
+
 		log.debug("Saving new user..."); //$NON-NLS-1$
-		repository.save(partialEntity);
+		final CustomerUser newUser;
+		try {
+			newUser = repository.save(partialEntity);
+		} catch (final DataIntegrityViolationException ex) {
+			log.warn("{} encountered whilst creating user {}", ex.getClass().getCanonicalName(), newExternalId); //$NON-NLS-1$
+			throw new DuplicateUserException(String.format("User '%s' (%s) already exists",  //$NON-NLS-1$
+					partialEntity.getUsername(), partialEntity.getEmail()));
+		} catch (final Exception e) {
+			log.warn("{} encountered during user creation", e.getClass().getCanonicalName()); //$NON-NLS-1$
+			throw new UserServiceException("The user creation encountered an exception"); //$NON-NLS-1$
+		}
 		log.info("User {} created successfully", newExternalId); //$NON-NLS-1$
+		return CustomerUserMapper.responseFrom(newUser);
 	}
 
 	/**
@@ -124,7 +142,7 @@ public class CustomerUserService {
 	 * @param externalId External identifier of user to be updated (UUID)
 	 */
 	@Transactional
-	public void updateUser(String requestorIdentifier, UUID externalId, UpdateCustomerUserRequest userUpdateRequest) {
+	public CustomerUserResponse updateUser(String requestorIdentifier, UUID externalId, UpdateCustomerUserRequest userUpdateRequest) {
 		checkIfAdmin(requestorIdentifier);
 
 		log.debug("updateUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
@@ -136,9 +154,20 @@ public class CustomerUserService {
 			user.setAddress(AddressMapper.toEntity(userUpdateRequest.getAddress()));
 		}
 
-		log.debug("Updating user {}", user.getId()); //$NON-NLS-1$
-		repository.save(user);
-		log.info("User {} updated", user.getId()); //$NON-NLS-1$
+		final CustomerUser updatedUser;
+		try {
+			log.debug("Updating user {}", user.getId()); //$NON-NLS-1$
+			updatedUser = repository.save(user);
+			log.info("User {} updated", user.getId()); //$NON-NLS-1$
+			return CustomerUserMapper.responseFrom(updatedUser);
+		} catch (final DataIntegrityViolationException ex) {
+			log.warn("{} encountered whilst updating user {}", ex.getClass().getCanonicalName(), user.getExternalId()); //$NON-NLS-1$
+			throw new DuplicateUserException(String.format("User '%s' (%s) already exists",  //$NON-NLS-1$
+					user.getUsername(), user.getEmail()));
+		} catch (final Exception e) {
+			log.warn("{} encountered during user updaate", e.getClass().getCanonicalName()); //$NON-NLS-1$
+			throw new UserServiceException("The user update encountered an exception"); //$NON-NLS-1$
+		}
 	}
 
 	/**

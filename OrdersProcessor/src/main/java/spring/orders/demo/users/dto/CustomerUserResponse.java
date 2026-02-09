@@ -2,21 +2,32 @@ package spring.orders.demo.users.dto;
 
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class CustomerUserResponse {
 
+	@Schema(description = "Unique external user identifier",
+			example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
 	private String externalId;
 
+	@Schema(example = "johndoe")
 	private String username;
 
+	@Schema(example = "johnd@order.processor.com")
 	private String email;
 
+	@Schema(description = "User creation date and time")
 	private LocalDateTime created;
 
+	@Schema(example = "USER", defaultValue = "USER")
 	private String role;
 
+	@Schema(example = "ACTIVE")
 	private String status;
 
 	private AddressDTO address;
+
+	public CustomerUserResponse() {}
 
 	public CustomerUserResponse(String externalId, String username, String email,
 			LocalDateTime created, String role,

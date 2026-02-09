@@ -1,5 +1,6 @@
 package spring.orders.demo.users.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotBlank;
 
@@ -7,9 +8,12 @@ import jakarta.validation.constraints.NotBlank;
 public class AddressDTO {
 
 	@NotBlank
+	@Schema (example = "3401 Hillview Avenue, Palo Alto, CA 94304, USA")
 	private String addressLine1;
 
 	private String addressLine2;
+
+	public AddressDTO() {}
 
 	public AddressDTO(@NotBlank String addressLine1) {
 		this.addressLine1 = addressLine1;

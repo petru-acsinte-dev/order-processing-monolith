@@ -1,4 +1,4 @@
-package spring.orders.demo.logging;
+package spring.orders.demo.filters;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -23,6 +23,8 @@ public class RequestIdFilter extends OncePerRequestFilter {
 		try {
             final String requestId = UUID.randomUUID().toString().substring(0, 8);
             MDC.put(REQUEST_ID, requestId);
+            MDC.put("requestPath", request.getRequestURI()); //$NON-NLS-1$
+            MDC.put("requestMethod", request.getMethod()); //$NON-NLS-1$
 
             response.setHeader("X-Request-Id", requestId); //$NON-NLS-1$
 
