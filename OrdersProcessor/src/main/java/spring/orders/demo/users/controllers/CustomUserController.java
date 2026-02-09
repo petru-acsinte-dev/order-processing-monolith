@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -94,5 +95,25 @@ public class CustomUserController {
 		final CustomerUserResponse updatedUser = service.updateUser(requestorIdentifier, external, updateRequest);
 		return ResponseEntity
 			.ok(updatedUser);
+	}
+
+	@DeleteMapping
+	@Operation(summary = "Archives an existing user",
+			description = "Archives an existing user. Requires admin priviledges.")
+	@ApiResponse (responseCode = "204",
+			description = "User deleted successfully")
+	@ApiResponse (responseCode = "403",
+			description = "User does not have the required priviledges")
+	@ApiResponse (responseCode = "401",
+			description = "Unauthorized user request")
+	@Parameter(name = "externalId", required = true)
+	public ResponseEntity<CustomerUserResponse> updateUser(
+			@RequestHeader (name = "x-USER") String requestorIdentifier,
+			@RequestParam (required = true) String externalId) {
+		final UUID external = UUID.fromString(externalId);
+		service.deleteUser(requestorIdentifier, external);
+		return ResponseEntity
+			.noContent()
+			.build();
 	}
 }

@@ -28,16 +28,20 @@ import spring.orders.demo.users.exceptions.UserServiceException;
 import spring.orders.demo.users.mappers.AddressMapper;
 import spring.orders.demo.users.mappers.CustomerUserMapper;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
+import spring.orders.demo.users.repositories.StatusRepository;
 
 @Service
 public class CustomerUserService {
 
 	private static Logger log = org.slf4j.LoggerFactory.getLogger(CustomerUserService.class);
 
-	private final CustomerUserRepository repository;
+	private final CustomerUserRepository userRepository;
 
-	public CustomerUserService(CustomerUserRepository repository) {
-		this.repository = repository;
+	private final StatusRepository statusRepository;
+
+	public CustomerUserService(CustomerUserRepository userRepository, StatusRepository statusRepository) {
+		this.userRepository = userRepository;
+		this.statusRepository = statusRepository;
 	}
 
 	/**
@@ -58,8 +62,8 @@ public class CustomerUserService {
 	}
 
 	private CustomerUser getUserByPiiIdentifier(String piiIdentifier) {
-		return repository.findByUsername(piiIdentifier)
-				.or(() -> repository.findByEmail(piiIdentifier))
+		return userRepository.findByUsername(piiIdentifier)
+				.or(() -> userRepository.findByEmail(piiIdentifier))
 				.orElseThrow(UserAuthenticationFailure::new);
 	}
 
@@ -84,7 +88,7 @@ public class CustomerUserService {
 
 		log.debug("Listing all users (admin)"); //$NON-NLS-1$
 		// TODO: unpaged for now
-		final Page<CustomerUser> users = repository.findAll(Pageable.unpaged(Sort.by("username"))); //$NON-NLS-1$
+		final Page<CustomerUser> users = userRepository.findAll(Pageable.unpaged(Sort.by("username"))); //$NON-NLS-1$
 		return users.stream().map(CustomerUserMapper::responseFrom).toList();
 	}
 
@@ -123,7 +127,7 @@ public class CustomerUserService {
 		log.debug("Saving new user..."); //$NON-NLS-1$
 		final CustomerUser newUser;
 		try {
-			newUser = repository.save(partialEntity);
+			newUser = userRepository.save(partialEntity);
 		} catch (final DataIntegrityViolationException ex) {
 			log.warn("{} encountered whilst creating user {}", ex.getClass().getCanonicalName(), newExternalId); //$NON-NLS-1$
 			throw new DuplicateUserException(String.format("User '%s' (%s) already exists",  //$NON-NLS-1$
@@ -146,7 +150,7 @@ public class CustomerUserService {
 		checkIfAdmin(requestorIdentifier);
 
 		log.debug("updateUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
-		final CustomerUser user = repository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
+		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
 		if (null != userUpdateRequest.getEmail()) {
 			user.setEmail(userUpdateRequest.getEmail());
 		}
@@ -157,7 +161,7 @@ public class CustomerUserService {
 		final CustomerUser updatedUser;
 		try {
 			log.debug("Updating user {}", user.getId()); //$NON-NLS-1$
-			updatedUser = repository.save(user);
+			updatedUser = userRepository.save(user);
 			log.info("User {} updated", user.getId()); //$NON-NLS-1$
 			return CustomerUserMapper.responseFrom(updatedUser);
 		} catch (final DataIntegrityViolationException ex) {
@@ -181,13 +185,13 @@ public class CustomerUserService {
 		checkIfAdmin(requestorIdentifier);
 
 		log.debug("deleteUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
-		final CustomerUser user = repository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
-		final Status status = user.getStatus();
-		status.setStatus(UserStatus.ARCHIVED);
-		user.setStatus(status);
+		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
+
+		final Status archivedStatus = statusRepository.findByStatus(UserStatus.ARCHIVED)
+				.orElseThrow(InvalidUserStatusException::new);
 
 		log.debug("Deleting user {}", user.getId()); //$NON-NLS-1$
-		repository.save(user);
+		user.setStatus(archivedStatus);
 		log.info("User {} marked as deleted", user.getId()); //$NON-NLS-1$
 	}
 }
