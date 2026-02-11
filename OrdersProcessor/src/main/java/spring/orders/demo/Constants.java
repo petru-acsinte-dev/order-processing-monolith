@@ -11,4 +11,6 @@ public final class Constants {
 
 	public static final String USER_ADMIN = "ADMIN"; //$NON-NLS-1$
 
+	public static final String PARAM_EXTERNAL_ID = "externalId"; //$NON-NLS-1$
+
 }

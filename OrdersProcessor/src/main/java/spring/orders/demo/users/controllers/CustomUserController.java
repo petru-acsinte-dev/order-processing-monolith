@@ -87,7 +87,7 @@ public class CustomUserController {
 			description = "User does not have the required priviledges")
 	@ApiResponse (responseCode = "401",
 			description = "Unauthorized user request")
-	@Parameter(name = "externalId", required = true)
+	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	public ResponseEntity<CustomerUserResponse> updateUser(
 			@RequestHeader (name = Constants.X_USER) String requestorIdentifier,
 			@RequestParam (required = true) String externalId,
@@ -107,7 +107,7 @@ public class CustomUserController {
 			description = "User does not have the required priviledges")
 	@ApiResponse (responseCode = "401",
 			description = "Unauthorized user request")
-	@Parameter(name = "externalId", required = true)
+	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	public ResponseEntity<CustomerUserResponse> updateUser(
 			@RequestHeader (name = Constants.X_USER) String requestorIdentifier,
 			@RequestParam (required = true) String externalId) {

@@ -1,13 +1,18 @@
 package spring.orders.demo.users.services;
 
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -17,11 +22,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import spring.orders.demo.Constants;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
+import spring.orders.demo.users.dto.CustomerUserResponse;
+import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
 import spring.orders.demo.users.entities.UserRole;
 import spring.orders.demo.users.entities.UserStatus;
 
@@ -37,6 +45,9 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	private final String secondUsername = "dan"; //$NON-NLS-1$
 	private final String secondEmail = "dan@order.processor.com"; //$NON-NLS-1$
 	private final String secondAddressLine1 = "LA LA"; //$NON-NLS-1$
+
+	private final String newEmail = "newemail@order.processor.com"; //$NON-NLS-1$
+	private final String newAddressLine1 = "AU TX"; //$NON-NLS-1$
 
 	private static final String JSON_PATH_EXTERNAL_ID = "$.externalId"; //$NON-NLS-1$
 	private static final String JSON_PATH_ROLE = "$.role"; //$NON-NLS-1$
@@ -72,13 +83,105 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 
 	@Test
 	void createUsers() throws Exception {
+		createUser(firstUsername, firstEmail, firstAddressLine1);
+		// getting user (+ ADMIN)
+		getAllUsers(2);
+
+		createUser(secondUsername, secondEmail, secondAddressLine1);
+		// getting both users (+ ADMIN)
+		getAllUsers(3);
+	}
+
+	@Test
+	void updateUsers() throws Exception {
+		final CustomerUserResponse newUser = createUser(secondUsername, secondEmail, secondAddressLine1);
+		// getting user (+ ADMIN)
+		getAllUsers(2);
+
+		final var updateRequest = new UpdateCustomerUserRequest();
+		updateRequest.setEmail(newEmail);
+		updateRequest.setAddress(new AddressDTO(newAddressLine1));
+
+		final MvcResult result = mockMvc.perform(put(Constants.USERS_PATH)
+						.accept(MediaType.APPLICATION_JSON)
+						.header(Constants.X_USER, Constants.USER_ADMIN)
+						.param(Constants.PARAM_EXTERNAL_ID, newUser.getExternalId())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(updateRequest)))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath(JSON_PATH_EMAIL).value(newEmail))
+				.andExpect(jsonPath(JSON_PATH_ADDRESS_LINE1).value(newAddressLine1))
+				.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID).value(newUser.getExternalId()))
+				.andExpect(jsonPath(JSON_PATH_USERNAME).value(newUser.getUsername()))
+				.andReturn();
+		if (log.isDebugEnabled()) {
+			log.debug(result.getResponse().getContentAsString());
+		}
+
+		// getting user (+ ADMIN)
+		getAllUsers(2);
+	}
+
+	@Test
+	void deleteUsers() throws Exception {
+		final CustomerUserResponse firstUser = createUser(firstUsername, firstEmail, firstAddressLine1);
+		// getting user (+ ADMIN)
+		getAllUsers(2);
+
+		createUser(secondUsername, secondEmail, secondAddressLine1);
+		// getting users (+ ADMIN)
+		getAllUsers(3);
+
+		final MvcResult result = mockMvc.perform(delete(Constants.USERS_PATH)
+						.param(Constants.PARAM_EXTERNAL_ID, firstUser.getExternalId())
+						.header(Constants.X_USER, Constants.USER_ADMIN))
+				.andExpect(status().isNoContent())
+				.andReturn();
+		if (log.isDebugEnabled()) {
+			log.debug(result.getResponse().getContentAsString());
+		}
+
+		// getting user (+ ADMIN)
+		final List<CustomerUserResponse> allUsers = getAllUsers(3);
+		boolean found = false;
+		for (final CustomerUserResponse user : allUsers) {
+			if (user.getExternalId().equals(firstUser.getExternalId())) {
+				assertEquals(firstUser.getUsername(), user.getUsername(),
+						String.format("User %s does not match expected username", user.getExternalId())); //$NON-NLS-1$
+				assertEquals(firstUser.getEmail(), user.getEmail(),
+						String.format("User %s does not match expected email", user.getExternalId())); //$NON-NLS-1$
+				found = true;
+				break;
+			}
+		}
+		assertTrue("Deleted user not found", found); //$NON-NLS-1$
+	}
+
+	private List<CustomerUserResponse> getAllUsers(int expectedNumberOfUsers) throws Exception {
+		final MvcResult result = mockMvc.perform(get(Constants.USERS_PATH)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(Constants.X_USER, Constants.USER_ADMIN))
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
+			.andExpect(jsonPath("$.length()").value(expectedNumberOfUsers)) //$NON-NLS-1$
+			.andReturn();
+		final String content = result.getResponse().getContentAsString();
+		if (log.isDebugEnabled()) {
+			log.debug(content);
+		}
+		return objectMapper.readValue(content, new TypeReference<List<CustomerUserResponse>>() {});
+	}
+
+	private CustomerUserResponse createUser(String username, String email, String addressLine) throws Exception {
 		final var createRequest = new CreateCustomerUserRequest();
-		createRequest.setUsername(firstUsername);
-		createRequest.setEmail(firstEmail);
-		createRequest.setAddress(new AddressDTO(firstAddressLine1));
+		createRequest.setUsername(username);
+		createRequest.setEmail(email);
+		createRequest.setAddress(new AddressDTO(addressLine));
 
 		// first user
-		mockMvc.perform(post(Constants.USERS_PATH)
+		final MvcResult result = mockMvc.perform(post(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
 						.header(Constants.X_USER, Constants.USER_ADMIN)
 						.contentType(MediaType.APPLICATION_JSON)
@@ -86,42 +189,18 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 						.content(objectMapper.writeValueAsString(createRequest)))
 				.andExpect(status().isCreated())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath(JSON_PATH_USERNAME).value(firstUsername))
-				.andExpect(jsonPath(JSON_PATH_EMAIL).value(firstEmail))
-				.andExpect(jsonPath(JSON_PATH_ADDRESS_LINE1).value(firstAddressLine1))
+				.andExpect(jsonPath(JSON_PATH_USERNAME).value(username))
+				.andExpect(jsonPath(JSON_PATH_EMAIL).value(email))
+				.andExpect(jsonPath(JSON_PATH_ADDRESS_LINE1).value(addressLine))
 				.andExpect(jsonPath(JSON_PATH_STATUS).value(UserStatus.ACTIVE))
 				.andExpect(jsonPath(JSON_PATH_ROLE).value(UserRole.USER))
-				.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID).isNotEmpty());
-
-		final var createRequest2 = new CreateCustomerUserRequest();
-		createRequest2.setUsername(secondUsername);
-		createRequest2.setEmail(secondEmail);
-		createRequest2.setAddress(new AddressDTO(secondAddressLine1));
-
-		// second user
-		mockMvc.perform(post(Constants.USERS_PATH)
-				.accept(MediaType.APPLICATION_JSON)
-				.header(Constants.X_USER, Constants.USER_ADMIN)
-				.contentType(MediaType.APPLICATION_JSON)
-				.characterEncoding(StandardCharsets.UTF_8)
-				.content(objectMapper.writeValueAsString(createRequest2)))
-		.andExpect(status().isCreated())
-		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-		.andExpect(jsonPath(JSON_PATH_USERNAME).value(secondUsername))
-		.andExpect(jsonPath(JSON_PATH_EMAIL).value(secondEmail))
-		.andExpect(jsonPath(JSON_PATH_ADDRESS_LINE1).value(secondAddressLine1))
-		.andExpect(jsonPath(JSON_PATH_STATUS).value(UserStatus.ACTIVE))
-		.andExpect(jsonPath(JSON_PATH_ROLE).value(UserRole.USER))
-		.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID).isNotEmpty())
-		.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID, matchesPattern(UUID_REGEX)));
-
-		// getting both users (+ ADMIN)
-		mockMvc.perform(get(Constants.USERS_PATH)
-						.accept(MediaType.APPLICATION_JSON)
-						.header(Constants.X_USER, Constants.USER_ADMIN))
-				.andExpect(status().isOk())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
-				.andExpect(jsonPath("$.length()").value(3)); //$NON-NLS-1$
+				.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID).isNotEmpty())
+				.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID, matchesPattern(UUID_REGEX)))
+				.andReturn();
+		final String content = result.getResponse().getContentAsString();
+		if (log.isDebugEnabled()) {
+			log.debug(content);
+		}
+		return objectMapper.readValue(content, new TypeReference<CustomerUserResponse>() {});
 	}
 }
