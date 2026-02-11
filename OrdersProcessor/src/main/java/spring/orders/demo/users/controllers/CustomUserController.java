@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import spring.orders.demo.Constants;
 import spring.orders.demo.XUserHeader;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
@@ -30,7 +31,7 @@ import spring.orders.demo.users.services.CustomerUserService;
 
 @Tag (name = "Users controller", description = "Operations related to users management")
 @RestController
-@RequestMapping("/users")
+@RequestMapping(Constants.USERS_PATH)
 @XUserHeader
 public class CustomUserController {
 
@@ -51,7 +52,7 @@ public class CustomUserController {
 				description = "User does not have the required priviledges")
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request")
-	public List<CustomerUserResponse> findAll(@RequestHeader (name = "x-USER") String requestorIdentifier) {
+	public List<CustomerUserResponse> findAll(@RequestHeader (name = Constants.X_USER) String requestorIdentifier) {
 		return service.findAllUsers(requestorIdentifier);
 	}
 
@@ -67,7 +68,7 @@ public class CustomUserController {
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request")
 	public ResponseEntity<CustomerUserResponse> createUser(
-			@RequestHeader (name = "x-USER") String requestorIdentifier,
+			@RequestHeader (name = Constants.X_USER) String requestorIdentifier,
 			@RequestBody CreateCustomerUserRequest createRequest) {
 		final CustomerUserResponse newUser = service.createUser(requestorIdentifier, createRequest);
 		return ResponseEntity
@@ -88,7 +89,7 @@ public class CustomUserController {
 			description = "Unauthorized user request")
 	@Parameter(name = "externalId", required = true)
 	public ResponseEntity<CustomerUserResponse> updateUser(
-			@RequestHeader (name = "x-USER") String requestorIdentifier,
+			@RequestHeader (name = Constants.X_USER) String requestorIdentifier,
 			@RequestParam (required = true) String externalId,
 			@RequestBody UpdateCustomerUserRequest updateRequest) {
 		final UUID external = UUID.fromString(externalId);
@@ -108,7 +109,7 @@ public class CustomUserController {
 			description = "Unauthorized user request")
 	@Parameter(name = "externalId", required = true)
 	public ResponseEntity<CustomerUserResponse> updateUser(
-			@RequestHeader (name = "x-USER") String requestorIdentifier,
+			@RequestHeader (name = Constants.X_USER) String requestorIdentifier,
 			@RequestParam (required = true) String externalId) {
 		final UUID external = UUID.fromString(externalId);
 		service.deleteUser(requestorIdentifier, external);

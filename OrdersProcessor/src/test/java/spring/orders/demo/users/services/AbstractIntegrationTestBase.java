@@ -1,0 +1,47 @@
+package spring.orders.demo.users.services;
+
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+@Testcontainers
+@SpringBootTest
+class AbstractIntegrationTestBase {
+
+	@Autowired
+	Flyway flyWay;
+
+	@SuppressWarnings("resource")
+	@Container
+	static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15") //$NON-NLS-1$
+														.withDatabaseName("postgresdb") //$NON-NLS-1$
+														.withUsername("posttest") //$NON-NLS-1$
+														.withPassword("postPass") //$NON-NLS-1$
+														.withReuse(true)
+														.withLogConsumer(frame -> System.out.print(frame.getUtf8String()));
+
+	@DynamicPropertySource
+	static void configureProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.datasource.url", postgres::getJdbcUrl); //$NON-NLS-1$
+		registry.add("spring.datasource.username", postgres::getUsername); //$NON-NLS-1$
+		registry.add("spring.datasource.password", postgres::getPassword); //$NON-NLS-1$
+	}
+
+	@BeforeEach
+	void migrateDatabase() {
+		flyWay.migrate();
+	}
+
+	@AfterEach
+	void cleanDatabase() {
+		flyWay.clean();
+	}
+
+}

@@ -10,13 +10,12 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import spring.orders.demo.Constants;
 import spring.orders.demo.users.exceptions.UserAuthenticationFailure;
 import spring.orders.demo.users.services.CustomerUserService;
 
 @Component
 public class UserHeaderFilter extends OncePerRequestFilter {
-
-	private static final String X_USER = "x-USER"; //$NON-NLS-1$
 
 	private final CustomerUserService service;
 
@@ -27,10 +26,11 @@ public class UserHeaderFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		final String xUser = request.getHeader(X_USER);
+		final String xUser = request.getHeader(Constants.X_USER);
 
 		if ((null == xUser) || xUser.isBlank()) {
-			response.sendError(HttpStatus.FORBIDDEN.value(), String.format("%s header required", X_USER)); //$NON-NLS-1$
+			response.sendError(HttpStatus.FORBIDDEN.value(),
+					String.format("%s header required", Constants.X_USER)); //$NON-NLS-1$
 			return;
 		}
 

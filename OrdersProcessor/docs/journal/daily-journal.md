@@ -30,3 +30,8 @@ OrderProcessor - Daily journal
 2026-02-09
 -
 - created CustomerUserController with CRUD methods for /users endpoint and rudimentary user authentication/authorization
+
+2026-02-11
+-
+- integration tests for /users endpoint
+- switching to test containers vs. running tests against local Postgres DB maintained manually

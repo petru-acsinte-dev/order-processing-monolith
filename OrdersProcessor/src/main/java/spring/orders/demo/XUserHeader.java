@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 
 @Retention(RUNTIME)
 @Target({ METHOD, ElementType.TYPE })
-@Parameter(name = "x-USER",
+@Parameter(name = Constants.X_USER,
 	in = ParameterIn.HEADER,
 	required = true,
 	allowEmptyValue = false,
