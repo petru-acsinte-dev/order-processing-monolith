@@ -5,6 +5,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -41,7 +43,13 @@ class AbstractIntegrationTestBase {
 
 	@AfterEach
 	void cleanDatabase() {
-		flyWay.clean();
+		final JdbcTemplate jdbc = new JdbcTemplate(
+	            new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
+	        );
+			jdbc.execute("DROP SCHEMA ship CASCADE"); //$NON-NLS-1$
+			jdbc.execute("DROP SCHEMA orders CASCADE"); //$NON-NLS-1$
+			jdbc.execute("DROP SCHEMA users CASCADE"); //$NON-NLS-1$
+			jdbc.execute("DROP TABLE public.flyway_schema_history"); //$NON-NLS-1$
 	}
 
 }
