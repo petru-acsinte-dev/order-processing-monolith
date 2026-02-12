@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,8 +38,10 @@ import spring.orders.demo.users.entities.Status;
 import spring.orders.demo.users.entities.UserRole;
 import spring.orders.demo.users.entities.UserStatus;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
+import spring.orders.demo.users.mappers.AddressMapper;
 import spring.orders.demo.users.mappers.CustomerUserMapper;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
+import spring.orders.demo.users.repositories.StatusRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerUserServiceTest {
@@ -48,18 +51,29 @@ class CustomerUserServiceTest {
 	private static final String ACTIVE = "ACTIVE"; //$NON-NLS-1$
 
 	@Mock
-	private CustomerUserRepository repository;
+	private CustomerUserRepository userRepository;
+
+	@Mock
+	private StatusRepository statusRepository;
 
 	@InjectMocks
 	private CustomerUserService service;
+
+	@Mock
+	private AddressMapper addressMapper;
+
+	@Mock
+	private CustomerUserMapper userMapper;
 
 	@Test
 	@DisplayName("Checks that the admin user can login")
 	void testAdminLogin() {
 		final CustomerUser admin = getAdminUser();
 
-		given(repository.findByUsername(ADMIN))
+		given(userRepository.findByUsername(ADMIN))
 			.willReturn(Optional.of(admin));
+
+		mockResponse(admin);
 
 		final CustomerUserResponse response = service.login(ADMIN);
 
@@ -72,11 +86,13 @@ class CustomerUserServiceTest {
 	void testFindAllUsers() {
 		final CustomerUser admin = getAdminUser();
 
-		given(repository.findByUsername(ADMIN))
+		given(userRepository.findByUsername(ADMIN))
 			.willReturn(Optional.of(admin));
 
-		given(repository.findAll(Pageable.unpaged(Sort.by("username")))) //$NON-NLS-1$
+		given(userRepository.findAll(Pageable.unpaged(Sort.by("username")))) //$NON-NLS-1$
 			.willReturn(new PageImpl<>(List.of(admin)));
+
+		mockResponse(admin);
 
 		final List<CustomerUserResponse> all = service.findAllUsers(ADMIN);
 
@@ -112,16 +128,18 @@ class CustomerUserServiceTest {
 	void testDeleteUserAsAdmin() {
 		final CustomerUser newUser = createAs(ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
 
-		given(repository.findByUsername(ADMIN))
+		given(userRepository.findByUsername(ADMIN))
     		.willReturn(Optional.of(getAdminUser()));
 
-		given(repository.findByExternalId(newUser.getExternalId()))
+		given(userRepository.findByExternalId(newUser.getExternalId()))
 			.willReturn(Optional.of(newUser));
+
+		given(statusRepository.findByStatus(UserStatus.ARCHIVED))
+			.willReturn(Optional.of(new Status(UserStatus.ARCHIVED_ID, UserStatus.ARCHIVED)));
 
 		service.deleteUser(ADMIN, newUser.getExternalId());
 
-		// create + delete
-		verify(repository, times(2)).save(any(CustomerUser.class));
+		verify(userRepository).save(any(CustomerUser.class));
 	}
 
 	@Test
@@ -141,17 +159,17 @@ class CustomerUserServiceTest {
 
 		final CustomerUser adminUser = getAdminUser();
 
-		given(repository.findByUsername(requestorIdentifier))
+		given(userRepository.findByUsername(requestorIdentifier))
         	.willAnswer(invocation -> (ADMIN.equals(requestorIdentifier) ? Optional.of(adminUser) : Optional.of(existingUser)));
 
 		// this is necessary to avoid UserNotFoundException
-		lenient().when(repository.findByExternalId(existingUser.getExternalId()))
+		lenient().when(userRepository.findByExternalId(existingUser.getExternalId()))
 			.thenReturn(Optional.of(existingUser));
 
 		service.updateUser(requestorIdentifier, existingUser.getExternalId(), updateRequest);
 
 		// create + update
-		verify(repository, times(2)).save(any(CustomerUser.class));
+		verify(userRepository, times(2)).save(any(CustomerUser.class));
 
 	}
 
@@ -167,7 +185,9 @@ class CustomerUserServiceTest {
             final UUID staticUUID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000"); //$NON-NLS-1$
             mockedUUID.when(UUID::randomUUID).thenReturn(staticUUID);
 
-            final CustomerUser newUser = CustomerUserMapper.fromRequest(createRequest);
+            mockEntity(createRequest);
+
+            final CustomerUser newUser = userMapper.fromCreateRequest(createRequest);
             newUser.setExternalId(staticUUID);
 
             final Status status = new Status(UserStatus.ACTIVE_ID, UserStatus.ACTIVE);
@@ -176,7 +196,7 @@ class CustomerUserServiceTest {
             final Role role = new Role(UserRole.USER_ID, UserRole.USER);
             newUser.setRole(role);
 
-            given(repository.findByUsername(ArgumentMatchers.anyString()))
+            given(userRepository.findByUsername(ArgumentMatchers.anyString()))
 	            .willAnswer(invocation -> {
 	                final String username = invocation.getArgument(0);
 	                return username.equals(ADMIN) ? Optional.of(adminUser) : Optional.of(newUser);
@@ -184,10 +204,57 @@ class CustomerUserServiceTest {
 
             service.createUser(requestorIdentifier, createRequest);
 
-            verify(repository).save(any(CustomerUser.class));
+            verify(userRepository).save(any(CustomerUser.class));
 
             return newUser;
 		}
+	}
+
+	private void mockEntity(CreateCustomerUserRequest createRequest) {
+		final CustomerUser entity = new CustomerUser();
+		entity.setUsername(createRequest.getUsername());
+		entity.setEmail(createRequest.getEmail());
+
+		mockAddress(createRequest.getAddress());
+
+		entity.setAddress(addressMapper.toEntity(createRequest.getAddress()));
+
+		when(userMapper.fromCreateRequest(createRequest))
+			.thenReturn(entity);
+	}
+
+	private void mockAddress(AddressDTO dto) {
+		final Address address = new Address();
+		address.setAddressLine1(dto.getAddressLine1());
+		final var line2 = dto.getAddressLine2();
+		if (null != line2) {
+			address.setAddressLine2(line2);
+		}
+
+		when(addressMapper.toEntity(dto))
+			.thenReturn(address);
+	}
+
+	private void mockAddress(Address address) {
+		final AddressDTO dto = new AddressDTO(address.getAddressLine1(), address.getAddressLine2());
+
+		when(addressMapper.toDTO(address))
+			.thenReturn(dto);
+	}
+
+	private void mockResponse(CustomerUser user) {
+		mockAddress(user.getAddress());
+		final CustomerUserResponse response =
+				new CustomerUserResponse(user.getExternalId().toString(),
+										user.getUsername(),
+										user.getEmail(),
+										user.getCreated(),
+										user.getRole().getRole(),
+										user.getStatus().getStatus(),
+										addressMapper.toDTO(user.getAddress()));
+
+		when(userMapper.toResponse(user))
+			.thenReturn(response);
 	}
 
 	private static CustomerUser getAdminUser() {

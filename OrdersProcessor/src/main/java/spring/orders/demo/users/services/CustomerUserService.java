@@ -39,9 +39,18 @@ public class CustomerUserService {
 
 	private final StatusRepository statusRepository;
 
-	public CustomerUserService(CustomerUserRepository userRepository, StatusRepository statusRepository) {
+	private final AddressMapper addressMapper;
+
+	private final CustomerUserMapper userMapper;
+
+	public CustomerUserService(CustomerUserRepository userRepository,
+								StatusRepository statusRepository,
+								CustomerUserMapper userMapper,
+								AddressMapper addressMapper) {
 		this.userRepository = userRepository;
 		this.statusRepository = statusRepository;
+		this.userMapper = userMapper;
+		this.addressMapper = addressMapper;
 	}
 
 	/**
@@ -56,7 +65,7 @@ public class CustomerUserService {
 
 		checkUserStatus(user);
 
-		final CustomerUserResponse response = CustomerUserMapper.responseFrom(user);
+		final CustomerUserResponse response = userMapper.toResponse(user);
 		log.info("User {} logged in", user.getId()); //$NON-NLS-1$
 		return response;
 	}
@@ -89,7 +98,7 @@ public class CustomerUserService {
 		log.debug("Listing all users (admin)"); //$NON-NLS-1$
 		// TODO: unpaged for now
 		final Page<CustomerUser> users = userRepository.findAll(Pageable.unpaged(Sort.by("username"))); //$NON-NLS-1$
-		return users.stream().map(CustomerUserMapper::responseFrom).toList();
+		return users.stream().map(userMapper::toResponse).toList();
 	}
 
 	private void checkIfAdmin(String requestorIdentifier) {
@@ -111,7 +120,7 @@ public class CustomerUserService {
 		log.debug("Creating new user..."); //$NON-NLS-1$
 		checkIfAdmin(requestorIdentifier);
 
-		final CustomerUser partialEntity = CustomerUserMapper.fromRequest(createRequest);
+		final CustomerUser partialEntity = userMapper.fromCreateRequest(createRequest);
 
 		final UUID newExternalId = UUID.randomUUID();
 		partialEntity.setExternalId(newExternalId);
@@ -137,7 +146,7 @@ public class CustomerUserService {
 			throw new UserServiceException("The user creation encountered an exception"); //$NON-NLS-1$
 		}
 		log.info("User {} created successfully", newExternalId); //$NON-NLS-1$
-		return CustomerUserMapper.responseFrom(newUser);
+		return userMapper.toResponse(newUser);
 	}
 
 	/**
@@ -155,7 +164,7 @@ public class CustomerUserService {
 			user.setEmail(userUpdateRequest.getEmail());
 		}
 		if (null != userUpdateRequest.getAddress()) {
-			user.setAddress(AddressMapper.toEntity(userUpdateRequest.getAddress()));
+			user.setAddress(addressMapper.toEntity(userUpdateRequest.getAddress()));
 		}
 
 		final CustomerUser updatedUser;
@@ -163,7 +172,7 @@ public class CustomerUserService {
 			log.debug("Updating user {}", user.getId()); //$NON-NLS-1$
 			updatedUser = userRepository.save(user);
 			log.info("User {} updated", user.getId()); //$NON-NLS-1$
-			return CustomerUserMapper.responseFrom(updatedUser);
+			return userMapper.toResponse(updatedUser);
 		} catch (final DataIntegrityViolationException ex) {
 			log.warn("{} encountered whilst updating user {}", ex.getClass().getCanonicalName(), user.getExternalId()); //$NON-NLS-1$
 			throw new DuplicateUserException(String.format("User '%s' (%s) already exists",  //$NON-NLS-1$

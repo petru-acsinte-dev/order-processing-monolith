@@ -29,6 +29,16 @@ public class CustomerUserResponse {
 
 	public CustomerUserResponse() {}
 
+	/**
+	 * CustomerUser DTO constructor.
+	 * @param externalId The external UUID uniquely identifying the user.
+	 * @param username The username.
+	 * @param email The email.
+	 * @param created The time the user was created.
+	 * @param role The user's role.
+	 * @param status The user's status.
+	 * @param address The user's address.
+	 */
 	public CustomerUserResponse(String externalId, String username, String email,
 			LocalDateTime created, String role,
 			String status, AddressDTO address) {

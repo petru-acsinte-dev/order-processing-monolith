@@ -35,3 +35,8 @@ OrderProcessor - Daily journal
 -
 - integration tests for /users endpoint
 - switching to test containers vs. running tests against local Postgres DB maintained manually
+
+2026-02-12
+-
+- replaced mappers with Mapstruct + mocked mappers in unit tests
+
