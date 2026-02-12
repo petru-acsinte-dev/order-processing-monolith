@@ -1,4 +1,4 @@
-package spring.orders.demo.users.services;
+package spring.orders.demo.users.integration;
 
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.Assert.assertTrue;
@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
 import spring.orders.demo.users.entities.UserRole;
 import spring.orders.demo.users.entities.UserStatus;
 
+@Tag("integration")
 @AutoConfigureMockMvc
 class CustomerUserIT extends AbstractIntegrationTestBase {
 

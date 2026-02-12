@@ -1,4 +1,4 @@
-package spring.orders.demo.users.services;
+package spring.orders.demo.users.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -42,7 +43,9 @@ import spring.orders.demo.users.mappers.AddressMapper;
 import spring.orders.demo.users.mappers.CustomerUserMapper;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
 import spring.orders.demo.users.repositories.StatusRepository;
+import spring.orders.demo.users.services.CustomerUserService;
 
+@Tag("unit")
 @ExtendWith(MockitoExtension.class)
 class CustomerUserServiceTest {
 

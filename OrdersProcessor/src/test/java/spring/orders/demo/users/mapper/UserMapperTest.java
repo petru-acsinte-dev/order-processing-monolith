@@ -1,4 +1,4 @@
-package spring.orders.demo.users;
+package spring.orders.demo.users.mapper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import spring.orders.demo.users.mappers.AddressMapperImpl;
 import spring.orders.demo.users.mappers.CustomerUserMapper;
 import spring.orders.demo.users.mappers.CustomerUserMapperImpl;
 
+@Tag("mapper")
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {AddressMapperImpl.class, CustomerUserMapperImpl.class})
 class UserMapperTest {
