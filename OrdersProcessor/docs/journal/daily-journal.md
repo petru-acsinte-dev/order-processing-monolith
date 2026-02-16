@@ -40,3 +40,6 @@ OrderProcessor - Daily journal
 -
 - replaced mappers with Mapstruct + mocked mappers in unit tests
 
+2026-02-16
+-
+- setup GitHub remote repository for this project
