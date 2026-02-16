@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Build and run tests
+        working-directory: OrdersProcessor
+        run: mvn -B clean verify
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            OrdersProcessor/target/surefire-reports
+            OrdersProcessor/target/failsafe-reports
+
+      - name: Build Docker image
+        working-directory: OrdersProcessor   # correct path to Dockerfile
+        run: docker build -t order-processor:latest .
