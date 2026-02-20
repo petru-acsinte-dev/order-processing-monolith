@@ -5,8 +5,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -109,7 +109,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		updateRequest.setAddress(new AddressDTO(newAddressLine1));
 		updateRequest.setPassword(UUID.randomUUID().toString());
 		// FIXME: change put to patch
-		final MvcResult result = mockMvc.perform(put(Constants.USERS_PATH)
+		final MvcResult result = mockMvc.perform(patch(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
 						.header(Constants.X_USER, Constants.USER_ADMIN)
 						.param(Constants.PARAM_EXTERNAL_ID, newUser.getExternalId())
