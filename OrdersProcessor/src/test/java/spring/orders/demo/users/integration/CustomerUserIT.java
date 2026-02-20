@@ -7,12 +7,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -43,10 +45,12 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	private final String firstUsername = "bobby"; //$NON-NLS-1$
 	private final String firstEmail = "bobby@order.processor.com"; //$NON-NLS-1$
 	private final String firstAddressLine1 = "NY NY"; //$NON-NLS-1$
+	private final String firstPassword = UUID.randomUUID().toString();
 
 	private final String secondUsername = "dan"; //$NON-NLS-1$
 	private final String secondEmail = "dan@order.processor.com"; //$NON-NLS-1$
 	private final String secondAddressLine1 = "LA LA"; //$NON-NLS-1$
+	private final String secondPassword = UUID.randomUUID().toString();
 
 	private final String newEmail = "newemail@order.processor.com"; //$NON-NLS-1$
 	private final String newAddressLine1 = "AU TX"; //$NON-NLS-1$
@@ -85,25 +89,26 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 
 	@Test
 	void createUsers() throws Exception {
-		createUser(firstUsername, firstEmail, firstAddressLine1);
+		createUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
 		getAllUsers(2);
 
-		createUser(secondUsername, secondEmail, secondAddressLine1);
+		createUser(secondUsername, secondEmail, firstPassword, secondAddressLine1);
 		// getting both users (+ ADMIN)
 		getAllUsers(3);
 	}
 
 	@Test
 	void updateUsers() throws Exception {
-		final CustomerUserResponse newUser = createUser(secondUsername, secondEmail, secondAddressLine1);
+		final CustomerUserResponse newUser = createUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting user (+ ADMIN)
 		getAllUsers(2);
 
 		final var updateRequest = new UpdateCustomerUserRequest();
 		updateRequest.setEmail(newEmail);
 		updateRequest.setAddress(new AddressDTO(newAddressLine1));
-
+		updateRequest.setPassword(UUID.randomUUID().toString());
+		// FIXME: change put to patch
 		final MvcResult result = mockMvc.perform(put(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
 						.header(Constants.X_USER, Constants.USER_ADMIN)
@@ -127,11 +132,11 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 
 	@Test
 	void deleteUsers() throws Exception {
-		final CustomerUserResponse firstUser = createUser(firstUsername, firstEmail, firstAddressLine1);
+		final CustomerUserResponse firstUser = createUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
 		getAllUsers(2);
 
-		createUser(secondUsername, secondEmail, secondAddressLine1);
+		createUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting users (+ ADMIN)
 		getAllUsers(3);
 
@@ -176,10 +181,11 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		return objectMapper.readValue(content, new TypeReference<List<CustomerUserResponse>>() {});
 	}
 
-	private CustomerUserResponse createUser(String username, String email, String addressLine) throws Exception {
+	private CustomerUserResponse createUser(String username, String email, String password, String addressLine) throws Exception {
 		final var createRequest = new CreateCustomerUserRequest();
 		createRequest.setUsername(username);
 		createRequest.setEmail(email);
+		createRequest.setPassword(password);
 		createRequest.setAddress(new AddressDTO(addressLine));
 
 		// first user
@@ -189,6 +195,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 						.contentType(MediaType.APPLICATION_JSON)
 						.characterEncoding(StandardCharsets.UTF_8)
 						.content(objectMapper.writeValueAsString(createRequest)))
+						.andDo(print())
 				.andExpect(status().isCreated())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath(JSON_PATH_USERNAME).value(username))

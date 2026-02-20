@@ -9,6 +9,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,14 +44,18 @@ public class CustomerUserService {
 
 	private final CustomerUserMapper userMapper;
 
+	private final PasswordEncoder passwordEncoder;
+
 	public CustomerUserService(CustomerUserRepository userRepository,
 								StatusRepository statusRepository,
 								CustomerUserMapper userMapper,
-								AddressMapper addressMapper) {
+								AddressMapper addressMapper,
+								PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
 		this.statusRepository = statusRepository;
 		this.userMapper = userMapper;
 		this.addressMapper = addressMapper;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	/**
@@ -96,7 +101,7 @@ public class CustomerUserService {
 		checkIfAdmin(requestorIdentifier);
 
 		log.debug("Listing all users (admin)"); //$NON-NLS-1$
-		// TODO: unpaged for now
+		// FIXME: unpaged for now
 		final Page<CustomerUser> users = userRepository.findAll(Pageable.unpaged(Sort.by("username"))); //$NON-NLS-1$
 		return users.stream().map(userMapper::toResponse).toList();
 	}
@@ -165,6 +170,9 @@ public class CustomerUserService {
 		}
 		if (null != userUpdateRequest.getAddress()) {
 			user.setAddress(addressMapper.toEntity(userUpdateRequest.getAddress()));
+		}
+		if (null != userUpdateRequest.getPassword()) {
+			user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
 		}
 
 		final CustomerUser updatedUser;

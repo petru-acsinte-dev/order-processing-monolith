@@ -12,6 +12,9 @@ public class UpdateCustomerUserRequest {
     @Schema(example = "johndoe@order.processing.com")
     private String email;
 
+    @NotBlank
+    private String password;
+
     @Valid
     private AddressDTO address;
 
@@ -29,6 +32,14 @@ public class UpdateCustomerUserRequest {
 
 	public void setAddress(AddressDTO address) {
 		this.address = address;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	@Override

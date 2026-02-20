@@ -43,3 +43,9 @@ OrderProcessor - Daily journal
 2026-02-16
 -
 - setup GitHub remote repository for this project
+
+2026-02-20
+-
+- introduced password in customer_user table (hashed with BCrypt)
+- enhanced customer-user requests and entity to include password (creation and update)
+- 

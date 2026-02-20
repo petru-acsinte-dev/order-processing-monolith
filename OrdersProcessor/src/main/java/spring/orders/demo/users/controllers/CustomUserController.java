@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import spring.orders.demo.Constants;
 import spring.orders.demo.XUserHeader;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
@@ -69,7 +70,7 @@ public class CustomUserController {
 				description = "Unauthorized user request")
 	public ResponseEntity<CustomerUserResponse> createUser(
 			@RequestHeader (name = Constants.X_USER) String requestorIdentifier,
-			@RequestBody CreateCustomerUserRequest createRequest) {
+			@Valid @RequestBody CreateCustomerUserRequest createRequest) {
 		final CustomerUserResponse newUser = service.createUser(requestorIdentifier, createRequest);
 		return ResponseEntity
 			.created(URI.create("/users/" + newUser.getExternalId())) //$NON-NLS-1$
@@ -91,7 +92,7 @@ public class CustomUserController {
 	public ResponseEntity<CustomerUserResponse> updateUser(
 			@RequestHeader (name = Constants.X_USER) String requestorIdentifier,
 			@RequestParam (required = true) String externalId,
-			@RequestBody UpdateCustomerUserRequest updateRequest) {
+			@Valid @RequestBody UpdateCustomerUserRequest updateRequest) {
 		final UUID external = UUID.fromString(externalId);
 		final CustomerUserResponse updatedUser = service.updateUser(requestorIdentifier, external, updateRequest);
 		return ResponseEntity

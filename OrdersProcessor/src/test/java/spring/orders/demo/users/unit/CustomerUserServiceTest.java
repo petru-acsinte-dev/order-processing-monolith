@@ -27,6 +27,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
@@ -59,14 +61,14 @@ class CustomerUserServiceTest {
 	@Mock
 	private StatusRepository statusRepository;
 
-	@InjectMocks
-	private CustomerUserService service;
-
 	@Mock
 	private AddressMapper addressMapper;
 
 	@Mock
 	private CustomerUserMapper userMapper;
+
+	@InjectMocks
+	private CustomerUserService service;
 
 	@Test
 	@DisplayName("Checks that the admin user can login")
@@ -260,6 +262,7 @@ class CustomerUserServiceTest {
 			.thenReturn(response);
 	}
 
+	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 	private static CustomerUser getAdminUser() {
 		final CustomerUser admin = new CustomerUser();
 		admin.setId(0L);
@@ -272,6 +275,7 @@ class CustomerUserServiceTest {
 		final Address address = new Address();
 		address.setAddressLine1("3401 Hillview Avenue, Palo Alto, CA 94304, USA"); //$NON-NLS-1$
 		admin.setAddress(address);
+		admin.setPassword(passwordEncoder.encode(ADMIN));
 		return admin;
 	}
 

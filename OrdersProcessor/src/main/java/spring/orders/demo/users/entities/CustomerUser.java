@@ -32,6 +32,9 @@ public class CustomerUser {
 	@NotBlank
 	private String email;
 
+	@NotBlank
+	private String password;
+
 	private LocalDateTime created;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -107,6 +110,14 @@ public class CustomerUser {
 
 	public void setAddress(Address address) {
 		this.address = address;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 }

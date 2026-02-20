@@ -16,6 +16,9 @@ public class CreateCustomerUserRequest {
     @Schema(example = "johnd@order.processor.com")
     private String email;
 
+    @NotBlank
+    private String password;
+
     @Valid
     private AddressDTO address;
 
@@ -41,6 +44,14 @@ public class CreateCustomerUserRequest {
 
 	public void setAddress(AddressDTO address) {
 		this.address = address;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	@Override
