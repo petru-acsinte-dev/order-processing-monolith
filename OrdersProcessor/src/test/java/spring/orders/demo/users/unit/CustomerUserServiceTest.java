@@ -30,6 +30,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import spring.orders.demo.Constants;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
@@ -49,10 +50,9 @@ import spring.orders.demo.users.services.CustomerUserService;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
-class CustomerUserServiceTest {
+public class CustomerUserServiceTest {
 
 	private static final String UUID0 = "00000000-0000-0000-0000-000000000000"; //$NON-NLS-1$
-	private static final String ADMIN = "ADMIN"; //$NON-NLS-1$
 	private static final String ACTIVE = "ACTIVE"; //$NON-NLS-1$
 
 	@Mock
@@ -71,27 +71,11 @@ class CustomerUserServiceTest {
 	private CustomerUserService service;
 
 	@Test
-	@DisplayName("Checks that the admin user can login")
-	void testAdminLogin() {
-		final CustomerUser admin = getAdminUser();
-
-		given(userRepository.findByUsername(ADMIN))
-			.willReturn(Optional.of(admin));
-
-		mockResponse(admin);
-
-		final CustomerUserResponse response = service.login(ADMIN);
-
-		assertThat(response).extracting("username", "role", "status")   //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
-							.containsExactly(ADMIN, ADMIN, ACTIVE);
-	}
-
-	@Test
 	@DisplayName("Retrieves all the users from the system")
 	void testFindAllUsers() {
 		final CustomerUser admin = getAdminUser();
 
-		given(userRepository.findByUsername(ADMIN))
+		given(userRepository.findByUsername(Constants.ADMIN))
 			.willReturn(Optional.of(admin));
 
 		given(userRepository.findAll(Pageable.unpaged(Sort.by("username")))) //$NON-NLS-1$
@@ -99,22 +83,22 @@ class CustomerUserServiceTest {
 
 		mockResponse(admin);
 
-		final List<CustomerUserResponse> all = service.findAllUsers(ADMIN);
+		final List<CustomerUserResponse> all = service.findAllUsers(Constants.ADMIN);
 
 		assertThat(all).size().isEqualTo(1);
-		assertThat(all.get(0).getUsername()).isEqualTo(ADMIN);
+		assertThat(all.get(0).getUsername()).isEqualTo(Constants.ADMIN);
 	}
 
 	@Test
 	@DisplayName("Tests that the admin can create a regular user")
 	void testCreateUserAsAdmin() {
-		createAs(ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
 	}
 
 	@Test
 	@DisplayName("Tests that a non-admin user cannot create a regular user")
 	void testCreateUserAsNonAdmin() {
-		createAs(ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
 
 		assertThrows(UnauthorizedOperationException.class,
 				() -> createAs("bobby", "dan", "dan@dev.com"));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
@@ -123,17 +107,17 @@ class CustomerUserServiceTest {
 	@Test
 	@DisplayName("Tests updating the email + address for an existing user")
 	void testUpdateUserAsAdmin() {
-		final CustomerUser newUser = createAs(ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		final CustomerUser newUser = createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
 
-		updateAs(ADMIN, newUser, "newbobby@dev.com", new AddressDTO("LA LA"));  //$NON-NLS-1$//$NON-NLS-2$
+		updateAs(Constants.ADMIN, newUser, "newbobby@dev.com", new AddressDTO("LA LA"));  //$NON-NLS-1$//$NON-NLS-2$
 	}
 
 	@Test
 	@DisplayName("Tests deleting an existing user")
 	void testDeleteUserAsAdmin() {
-		final CustomerUser newUser = createAs(ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		final CustomerUser newUser = createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
 
-		given(userRepository.findByUsername(ADMIN))
+		given(userRepository.findByUsername(Constants.ADMIN))
     		.willReturn(Optional.of(getAdminUser()));
 
 		given(userRepository.findByExternalId(newUser.getExternalId()))
@@ -142,7 +126,7 @@ class CustomerUserServiceTest {
 		given(statusRepository.findByStatus(UserStatus.ARCHIVED))
 			.willReturn(Optional.of(new Status(UserStatus.ARCHIVED_ID, UserStatus.ARCHIVED)));
 
-		service.deleteUser(ADMIN, newUser.getExternalId());
+		service.deleteUser(Constants.ADMIN, newUser.getExternalId());
 
 		verify(userRepository).save(any(CustomerUser.class));
 	}
@@ -150,7 +134,7 @@ class CustomerUserServiceTest {
 	@Test
 	@DisplayName("Tests that updating as non-admin not possible")
 	void testUpdateUserAsNonAdmin() {
-		final CustomerUser newUser = createAs(ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		final CustomerUser newUser = createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
 
 		final AddressDTO newAddress = new AddressDTO("LA LA"); //$NON-NLS-1$
 		assertThrows(UnauthorizedOperationException.class,
@@ -165,7 +149,7 @@ class CustomerUserServiceTest {
 		final CustomerUser adminUser = getAdminUser();
 
 		given(userRepository.findByUsername(requestorIdentifier))
-        	.willAnswer(invocation -> (ADMIN.equals(requestorIdentifier) ? Optional.of(adminUser) : Optional.of(existingUser)));
+        	.willAnswer(invocation -> (Constants.ADMIN.equals(requestorIdentifier) ? Optional.of(adminUser) : Optional.of(existingUser)));
 
 		// this is necessary to avoid UserNotFoundException
 		lenient().when(userRepository.findByExternalId(existingUser.getExternalId()))
@@ -204,7 +188,7 @@ class CustomerUserServiceTest {
             given(userRepository.findByUsername(ArgumentMatchers.anyString()))
 	            .willAnswer(invocation -> {
 	                final String username = invocation.getArgument(0);
-	                return username.equals(ADMIN) ? Optional.of(adminUser) : Optional.of(newUser);
+	                return username.equals(Constants.ADMIN) ? Optional.of(adminUser) : Optional.of(newUser);
 	            });
 
             service.createUser(requestorIdentifier, createRequest);
@@ -263,19 +247,19 @@ class CustomerUserServiceTest {
 	}
 
 	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-	private static CustomerUser getAdminUser() {
+	public static CustomerUser getAdminUser() {
 		final CustomerUser admin = new CustomerUser();
 		admin.setId(0L);
-		admin.setUsername(ADMIN);
+		admin.setUsername(Constants.ADMIN);
 		admin.setEmail("admin@order.processing.com"); //$NON-NLS-1$
 		admin.setExternalId(UUID.fromString(UUID0));
 		admin.setCreated(LocalDateTime.now());
-		admin.setRole(new Role((short) 0, ADMIN));
+		admin.setRole(new Role((short) 0, UserRole.ADMIN));
 		admin.setStatus(new Status((short) 0, ACTIVE));
 		final Address address = new Address();
 		address.setAddressLine1("3401 Hillview Avenue, Palo Alto, CA 94304, USA"); //$NON-NLS-1$
 		admin.setAddress(address);
-		admin.setPassword(passwordEncoder.encode(ADMIN));
+		admin.setPassword(passwordEncoder.encode(Constants.ADMIN));
 		return admin;
 	}
 

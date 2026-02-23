@@ -22,8 +22,8 @@ import spring.orders.demo.users.entities.Status;
 import spring.orders.demo.users.entities.UserRole;
 import spring.orders.demo.users.entities.UserStatus;
 import spring.orders.demo.users.exceptions.DuplicateUserException;
+import spring.orders.demo.users.exceptions.InvalidStatusException;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
-import spring.orders.demo.users.exceptions.UserAuthenticationFailure;
 import spring.orders.demo.users.exceptions.UserNotFoundException;
 import spring.orders.demo.users.exceptions.UserServiceException;
 import spring.orders.demo.users.mappers.AddressMapper;
@@ -58,36 +58,10 @@ public class CustomerUserService {
 		this.passwordEncoder = passwordEncoder;
 	}
 
-	/**
-	 * Used to simulate a login, by identifying the user.
-	 * @param piiIdentifier Personal identifier (username <- recommended or email)
-	 * @return Identified user, if it exits.
-	 */
-	@Transactional (readOnly = true)
-	public CustomerUserResponse login(String piiIdentifier) {
-		log.debug("login(): Identifying user in the system"); //$NON-NLS-1$
-		final CustomerUser user = getUserByPiiIdentifier(piiIdentifier);
-
-		checkUserStatus(user);
-
-		final CustomerUserResponse response = userMapper.toResponse(user);
-		log.info("User {} logged in", user.getId()); //$NON-NLS-1$
-		return response;
-	}
-
 	private CustomerUser getUserByPiiIdentifier(String piiIdentifier) {
 		return userRepository.findByUsername(piiIdentifier)
 				.or(() -> userRepository.findByEmail(piiIdentifier))
-				.orElseThrow(UserAuthenticationFailure::new);
-	}
-
-	private static void checkUserStatus(CustomerUser user) {
-		log.debug("Checking status for user {}", user.getId()); //$NON-NLS-1$
-		final String userStatus = user.getStatus().getStatus();
-		if ( ! UserStatus.ACTIVE.equals(userStatus)) {
-			log.warn("User {} status is {}", user.getId(), userStatus); //$NON-NLS-1$
-			throw new UserAuthenticationFailure("User is not active"); //$NON-NLS-1$
-		}
+				.orElseThrow(UserNotFoundException::new);
 	}
 
 	/**
@@ -182,7 +156,8 @@ public class CustomerUserService {
 			log.info("User {} updated", user.getId()); //$NON-NLS-1$
 			return userMapper.toResponse(updatedUser);
 		} catch (final DataIntegrityViolationException ex) {
-			log.warn("{} encountered whilst updating user {}", ex.getClass().getCanonicalName(), user.getExternalId()); //$NON-NLS-1$
+			log.warn("{} encountered whilst updating user {}", //$NON-NLS-1$
+					ex.getClass().getCanonicalName(), user.getExternalId());
 			throw new DuplicateUserException(String.format("User '%s' (%s) already exists",  //$NON-NLS-1$
 					user.getUsername(), user.getEmail()));
 		} catch (final Exception e) {
@@ -205,7 +180,7 @@ public class CustomerUserService {
 		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
 
 		final Status archivedStatus = statusRepository.findByStatus(UserStatus.ARCHIVED)
-				.orElseThrow(InvalidUserStatusException::new);
+				.orElseThrow(InvalidStatusException::new);
 
 		log.debug("Deleting user {}", user.getId()); //$NON-NLS-1$
 		user.setStatus(archivedStatus);

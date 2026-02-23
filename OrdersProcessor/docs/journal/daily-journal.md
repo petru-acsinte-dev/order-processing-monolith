@@ -48,4 +48,13 @@ OrderProcessor - Daily journal
 -
 - introduced password in customer_user table (hashed with BCrypt)
 - enhanced customer-user requests and entity to include password (creation and update)
-- 
+- changed PUT to true PATCH request for user updates and refactored the user DTOs to reduce code duplication
+- enabled spring-boot-security and added JWT dependencies
+
+2026-02-23
+-
+- introduced JWTService, removed temporary authentication simulation methods from CustomerUserService
+- created UserDetailsSecurityService used exclusively by JWT
+- replaced UserHeaderFilter with JWTFilter
+- created unit test for new UserDetailsSecurityService
+- removed all references to the temporary x-user header, used to simulate authentication
