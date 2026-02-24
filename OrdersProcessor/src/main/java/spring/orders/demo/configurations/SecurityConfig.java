@@ -24,7 +24,7 @@ import spring.orders.demo.security.UserDetailsSecurityService;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsSecurityService userDetails;
+	private final UserDetailsSecurityService userDetails;
     private final JWTService jwtService;
     private final ObjectMapper objectMapper;
 
@@ -51,7 +51,12 @@ public class SecurityConfig {
 
         http.csrf(CsrfConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(Constants.LOGIN_PATH).permitAll()
+                    .requestMatchers(Constants.LOGIN_PATH,
+                    				Constants.ACTUATOR_HEALTH,
+                    				Constants.ACTUATOR_INFO,
+                    				Constants.SWAGGER_UI,
+                    				Constants.V3_API_DOCS
+                                ).permitAll()
                     .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

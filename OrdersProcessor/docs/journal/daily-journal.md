@@ -63,4 +63,5 @@ OrderProcessor - Daily journal
 -
 - had troubles with JWTFilter; for unexplained reasons, the POST request body would be consumed before it got to AuthController
 - introduced JsonLoginFilter to precede JWTFilter and obtain the request body and convert to credentials
-- 
+- allowed public access to swagger (docs) and actuator (monitoring) endpoints for now
+- pushed latest to GitHub -> clean build + deployable Docker image
