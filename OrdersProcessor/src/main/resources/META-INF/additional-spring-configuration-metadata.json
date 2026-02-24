@@ -2,11 +2,11 @@
   {
     "name": "jwt.secret",
     "type": "java.lang.String",
-    "description": "JWT secret"
+    "description": "The JWT secret key"
   },
   {
     "name": "jwt.expiration",
     "type": "java.lang.String",
-    "description": "JWT token expiration"
+    "description": "The JWT expiration period"
   }
 ]}

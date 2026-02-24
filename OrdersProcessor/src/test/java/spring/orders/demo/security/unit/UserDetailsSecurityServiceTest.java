@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.context.ActiveProfiles;
 
 import spring.orders.demo.security.UserDetailsSecurityService;
 import spring.orders.demo.users.entities.CustomerUser;
@@ -24,6 +25,7 @@ import spring.orders.demo.users.repositories.CustomerUserRepository;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 class UserDetailsSecurityServiceTest {
 
 	@Mock
