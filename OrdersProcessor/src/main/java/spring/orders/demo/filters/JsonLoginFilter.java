@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -21,6 +24,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import spring.orders.demo.Constants;
+import spring.orders.demo.security.AuthError;
 import spring.orders.demo.security.AuthRequest;
 import spring.orders.demo.security.JWTService;
 
@@ -51,14 +55,22 @@ public class JsonLoginFilter extends GenericFilter {
         		PrintWriter writer = resp.getWriter()) {
         		final AuthRequest authRequest = objectMapper.readValue(inStream, AuthRequest.class);
 
-        		final Authentication authentication = authManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
+        		try {
+	        		final Authentication authentication = authManager.authenticate(
+	                    new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
 
-        		final String token = jwtService.generateToken((UserDetails) authentication.getPrincipal());
+	        		final String token = jwtService.generateToken((UserDetails) authentication.getPrincipal());
 
-        		resp.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        		writer.write(String.format("{\"token\":\"%s\"}", token)); //$NON-NLS-1$
-        		return; // do not continue filter chain for login
+	        		resp.setContentType(MediaType.APPLICATION_JSON_VALUE);
+	        		writer.write(String.format("{\"token\":\"%s\"}", token)); //$NON-NLS-1$
+	        		return; // do not continue filter chain for login
+        		} catch (BadCredentialsException | UsernameNotFoundException ex) {
+        			resp.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        			resp.setStatus(HttpStatus.UNAUTHORIZED.value());
+        			final AuthError error = new AuthError("Unauthorized", ex.getMessage()); //$NON-NLS-1$
+        			writer.write(error.toString());
+        			return;
+        		}
         	}
         }
 

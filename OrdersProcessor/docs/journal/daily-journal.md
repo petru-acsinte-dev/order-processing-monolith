@@ -65,3 +65,6 @@ OrderProcessor - Daily journal
 - introduced JsonLoginFilter to precede JWTFilter and obtain the request body and convert to credentials
 - allowed public access to swagger (docs) and actuator (monitoring) endpoints for now
 - pushed latest to GitHub -> clean build + deployable Docker image
+- enhanced OpenAPI for auth controller
+- fixed 200 response on bad login with a custom AuthenticationEntryPoint
+- fixed swagger content for error response (no content for 401/403)

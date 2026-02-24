@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -49,9 +50,11 @@ public class CustomUserController {
 				content = @Content(mediaType = "application/json",
 								array = @ArraySchema(schema = @Schema(implementation = CustomerUserResponse.class))))
 	@ApiResponse (responseCode = "403",
-				description = "User does not have the required priviledges")
+				description = "User does not have the required priviledges",
+				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "401",
-				description = "Unauthorized user request")
+				description = "Unauthorized user request",
+				content = @Content(schema = @Schema(hidden = true)))
 	public List<CustomerUserResponse> findAll() {
 		final String requestorIdentifier = getUsername();
 		return service.findAllUsers(requestorIdentifier);
@@ -62,12 +65,14 @@ public class CustomUserController {
 				description = "Creates a new user. Requires admin priviledges.")
 	@ApiResponse (responseCode = "201",
 				description = "User created successfully",
-				content = @Content(mediaType = "application/json",
+				content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
 									array = @ArraySchema(schema = @Schema(implementation = CustomerUserResponse.class))))
 	@ApiResponse (responseCode = "403",
-				description = "User does not have the required priviledges")
+				description = "User does not have the required priviledges",
+				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "401",
-				description = "Unauthorized user request")
+				description = "Unauthorized user request",
+				content = @Content(schema = @Schema(hidden = true)))
 	public ResponseEntity<CustomerUserResponse> createUser(
 			@Valid @RequestBody CreateCustomerUserRequest createRequest) {
 		final String requestorIdentifier = getUsername();
@@ -85,9 +90,11 @@ public class CustomUserController {
 			content = @Content(mediaType = "application/json",
 						array = @ArraySchema(schema = @Schema(implementation = CustomerUserResponse.class))))
 	@ApiResponse (responseCode = "403",
-			description = "User does not have the required priviledges")
+				description = "User does not have the required priviledges",
+				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "401",
-			description = "Unauthorized user request")
+				description = "Unauthorized user request",
+				content = @Content(schema = @Schema(hidden = true)))
 	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	public ResponseEntity<CustomerUserResponse> updateUser(
 			@RequestParam (required = true) String externalId,
@@ -101,13 +108,16 @@ public class CustomUserController {
 
 	@DeleteMapping
 	@Operation(summary = "Archives an existing user",
-			description = "Archives an existing user. Requires admin priviledges.")
+				description = "Archives an existing user. Requires admin priviledges.")
 	@ApiResponse (responseCode = "204",
-			description = "User deleted successfully")
+				description = "User deleted successfully",
+				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "403",
-			description = "User does not have the required priviledges")
+				description = "User does not have the required priviledges",
+				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "401",
-			description = "Unauthorized user request")
+				description = "Unauthorized user request",
+				content = @Content(schema = @Schema(hidden = true)))
 	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	public ResponseEntity<CustomerUserResponse> updateUser(
 			@RequestParam (required = true) String externalId) {
