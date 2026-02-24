@@ -16,17 +16,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 
 import spring.orders.demo.Constants;
 import spring.orders.demo.users.dto.AddressDTO;
@@ -70,17 +73,34 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	@Autowired
 	ObjectMapper objectMapper;
 
+	private String bearer;
+
+	@BeforeEach
+	void login() throws Exception {
+		final MvcResult result = mockMvc.perform(post(Constants.LOGIN_PATH)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON)
+				// {"username":"x","password":"y"} payload
+				.content(String.format("{\"username\":\"%s\",\"password\":\"%s\"}",  //$NON-NLS-1$
+						Constants.ADMIN, Constants.ADMIN)))
+			.andExpect(status().isOk())
+			.andReturn();
+		final String strContent = result.getResponse().getContentAsString();
+		final String token = JsonPath.read(strContent, "$.token"); //$NON-NLS-1$
+		bearer = Constants.BEARER + token;
+	}
+
 	@Test
 	void testGetAllUsers() throws Exception {
 		final MvcResult result = mockMvc
 				.perform(get(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
-						.header(Constants.X_USER, Constants.USER_ADMIN))
+						.header(HttpHeaders.AUTHORIZATION, bearer))
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
 				.andExpect(jsonPath("$.length()").value(1)) //$NON-NLS-1$
-				.andExpect(jsonPath("$[0].username").value(Constants.USER_ADMIN)) //$NON-NLS-1$
+				.andExpect(jsonPath("$[0].username").value(Constants.ADMIN)) //$NON-NLS-1$
 				.andReturn();
 		if (log.isDebugEnabled()) {
 			log.debug(result.getResponse().getContentAsString());
@@ -108,10 +128,9 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		updateRequest.setEmail(newEmail);
 		updateRequest.setAddress(new AddressDTO(newAddressLine1));
 		updateRequest.setPassword(UUID.randomUUID().toString());
-		// FIXME: change put to patch
 		final MvcResult result = mockMvc.perform(patch(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
-						.header(Constants.X_USER, Constants.USER_ADMIN)
+						.header(HttpHeaders.AUTHORIZATION, bearer)
 						.param(Constants.PARAM_EXTERNAL_ID, newUser.getExternalId())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(updateRequest)))
@@ -142,7 +161,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 
 		final MvcResult result = mockMvc.perform(delete(Constants.USERS_PATH)
 						.param(Constants.PARAM_EXTERNAL_ID, firstUser.getExternalId())
-						.header(Constants.X_USER, Constants.USER_ADMIN))
+						.header(HttpHeaders.AUTHORIZATION, bearer))
 				.andExpect(status().isNoContent())
 				.andReturn();
 		if (log.isDebugEnabled()) {
@@ -168,7 +187,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	private List<CustomerUserResponse> getAllUsers(int expectedNumberOfUsers) throws Exception {
 		final MvcResult result = mockMvc.perform(get(Constants.USERS_PATH)
 				.accept(MediaType.APPLICATION_JSON)
-				.header(Constants.X_USER, Constants.USER_ADMIN))
+				.header(HttpHeaders.AUTHORIZATION, bearer))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
@@ -191,7 +210,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		// first user
 		final MvcResult result = mockMvc.perform(post(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
-						.header(Constants.X_USER, Constants.USER_ADMIN)
+						.header(HttpHeaders.AUTHORIZATION, bearer)
 						.contentType(MediaType.APPLICATION_JSON)
 						.characterEncoding(StandardCharsets.UTF_8)
 						.content(objectMapper.writeValueAsString(createRequest)))

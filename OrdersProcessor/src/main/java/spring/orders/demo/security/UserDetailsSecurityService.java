@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import spring.orders.demo.users.entities.UserStatus;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
 
@@ -17,6 +18,7 @@ public class UserDetailsSecurityService implements org.springframework.security.
 		this.repository = repository;
 	}
 
+	@Transactional
 	@Override
 	public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
 		return repository.findByUsername(identifier)

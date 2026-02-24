@@ -58,3 +58,9 @@ OrderProcessor - Daily journal
 - replaced UserHeaderFilter with JWTFilter
 - created unit test for new UserDetailsSecurityService
 - removed all references to the temporary x-user header, used to simulate authentication
+
+2026-02-24
+-
+- had troubles with JWTFilter; for unexplained reasons, the POST request body would be consumed before it got to AuthController
+- introduced JsonLoginFilter to precede JWTFilter and obtain the request body and convert to credentials
+- 

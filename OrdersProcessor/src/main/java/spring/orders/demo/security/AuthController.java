@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import jakarta.validation.Valid;
 import spring.orders.demo.Constants;
 
 @RestController
@@ -26,11 +27,11 @@ public class AuthController {
 	}
 
 	@PostMapping(value = Constants.LOGIN_PATH)
-	public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
-		log.debug("Login attempt: username={}, password={}", request.username(), request.password()); //$NON-NLS-1$
+	public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+		log.debug("Login attempt: username={}, password={}", request.getUsername(), request.getPassword()); //$NON-NLS-1$
 		// check the user/password against storage through UserDetailsSecurityService
 		final Authentication authentication = authManager.authenticate(
-				new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+				new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 		final UserDetails details = (UserDetails) authentication.getPrincipal();
 		// generate authenticated token
 		final String token = jwtService.generateToken(details);

@@ -3,7 +3,6 @@ package spring.orders.demo.configurations;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,49 +12,68 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import spring.orders.demo.Constants;
 import spring.orders.demo.filters.JWTFilter;
+import spring.orders.demo.filters.JsonLoginFilter;
+import spring.orders.demo.security.JWTService;
 import spring.orders.demo.security.UserDetailsSecurityService;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-	private static final String LOGIN_PATH = "/login/auth/**"; //$NON-NLS-1$
-	private final UserDetailsSecurityService userDetails;
-	private final JWTFilter jwtFilter;
+    private final UserDetailsSecurityService userDetails;
+    private final JWTService jwtService;
+    private final ObjectMapper objectMapper;
 
-	public SecurityConfig(UserDetailsSecurityService userDetails, JWTFilter jwtFilter) {
-		this.userDetails = userDetails;
-		this.jwtFilter = jwtFilter;
-	}
+    public SecurityConfig(UserDetailsSecurityService userDetails,
+                          JWTService jwtService,
+                          ObjectMapper objectMapper) {
+        this.userDetails = userDetails;
+        this.jwtService = jwtService;
+        this.objectMapper = objectMapper;
+    }
 
-	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		// not needed for stateless REST APIs using JWT
-		http.csrf(CsrfConfigurer::disable)
+    @Bean
+    JWTFilter jwtFilter(JWTService jwtService, UserDetailsSecurityService userDetailsService) {
+        return new JWTFilter(jwtService, userDetailsService);
+    }
 
-			.authorizeHttpRequests(auth -> auth.requestMatchers(LOGIN_PATH).permitAll()
-					.anyRequest().authenticated())
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthenticationManager authManager) throws Exception {
 
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        // Define the filter beans
+    	final JWTFilter jwtFilter = jwtFilter(jwtService, userDetails);
+        final JsonLoginFilter jsonLoginFilter = new JsonLoginFilter(authManager, jwtService, objectMapper);
 
-			.authenticationProvider(authenticationProvider())
+        http.csrf(CsrfConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(Constants.LOGIN_PATH).permitAll()
+                    .anyRequest().authenticated()
+            )
+            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authenticationProvider())
+            // JWT filter protects all other endpoints
+            .addFilterBefore(jwtFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+            // Add JSON login filter before JWT filter to avoid empty body
+            .addFilterBefore(jsonLoginFilter, JWTFilter.class);
 
-			//.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-			;
+        return http.build();
+    }
 
-		return http.build();
-	}
+    @Bean
+    DaoAuthenticationProvider authenticationProvider() {
+        final DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetails);
+        provider.setPasswordEncoder(new BCryptPasswordEncoder());
+        return provider;
+    }
 
-	@Bean
-	AuthenticationManager getAuthenticationManager(AuthenticationConfiguration config) throws Exception {
-		return config.getAuthenticationManager();
-	}
-
-	private AuthenticationProvider authenticationProvider() {
-		final DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetails);
-		provider.setPasswordEncoder(new BCryptPasswordEncoder());
-		return provider;
-	}
+    @Bean
+    AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
 }
