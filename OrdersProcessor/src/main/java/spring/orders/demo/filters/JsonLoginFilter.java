@@ -7,11 +7,9 @@ import java.io.PrintWriter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -64,10 +62,10 @@ public class JsonLoginFilter extends GenericFilter {
 	        		resp.setContentType(MediaType.APPLICATION_JSON_VALUE);
 	        		writer.write(String.format("{\"token\":\"%s\"}", token)); //$NON-NLS-1$
 	        		return; // do not continue filter chain for login
-        		} catch (BadCredentialsException | UsernameNotFoundException ex) {
+        		} catch (final Exception ex) {
         			resp.setContentType(MediaType.APPLICATION_JSON_VALUE);
         			resp.setStatus(HttpStatus.UNAUTHORIZED.value());
-        			final AuthError error = new AuthError("Unauthorized", ex.getMessage()); //$NON-NLS-1$
+        			final AuthError error = new AuthError(HttpStatus.UNAUTHORIZED.getReasonPhrase(), ex.getMessage());
         			writer.write(error.toString());
         			return;
         		}
