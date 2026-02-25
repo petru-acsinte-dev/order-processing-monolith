@@ -13,20 +13,19 @@ Technologies
 - OpenAPI/swagger
 - Hibernate persistence on PostgreSQL
 - Git
-- Jenkins CI/CD pipeline for continuous unit and integration testing
+- ~Jenkins~ GitHub CI/CD pipeline for continuous unit and integration testing (GitHub Actions was chosen for its simplicity, given the size of the project)
 
 Goal
 ----
 To have a stable and robust Spring Boot implementation on GitHub, split into multiple microservices each with its own database with migrated data,
-with code-first OpenAPI generated specs, with the capability to run a CI/CD Jenkins pipeline.    
+with code-first OpenAPI generated specs, with the capability to run a CI/CD Actions pipeline.    
 
 Trade-offs
 ----------
 The system is initially designed as a monolith with a single database for persistence. However, subsequent phases plan to split the implementation
 into several microservices and to split and migrate the database as well.  Therefore the initial monolithic design considers boundaries and 
 microservices readiness.  
-**NOTE**: This does not differ much from real work scenarios where projects are initially started using a monolithic approach (due to speed, costs etc.)  
-and are split later, due to performance reasons, in preparation for estimated increased system loads and so on.
+**NOTE**: This does not differ much from real work scenarios where projects are initially started using a monolithic approach (due to speed, costs etc.) and are split later, due to performance reasons, in preparation for estimated increased system loads and so on.
 
 To save time and concentrate on the Spring ecosystem SDLC, some shortcuts will be initially made:
 - a payment service is not considered at this time and its existence is implied; it could be considered much later, after the security layer
@@ -43,6 +42,7 @@ Considerations given the planned future split:
 - They entities also have external UUIDs for cross service communication.
 - Snapshotting product information into order lines preserves the history (e.g. for audit purposes).
 - To ensure consistent currency handling, embeddable Money objects are used.
+- To ensure *decoupling* of services, in-memory events with listeners are initially introduced. This simplifies the future split into microservices without overcomplicating the monolithic design.
 
 **2. Domain model**  
 *2.1 CustomerUser* (combined User and Customer entity)  
@@ -107,7 +107,9 @@ Used consistently across products, orders, order lines.
 Less error prone (e.g. currency mix) and avoids separate pricing tables.
 
 **6. Trade-offs and decisions**  
-a. User+Customer simplifies the model (1:1 relationship). A user cannot manager orders for multiple, different customers though.  
-b. Order mutable until locked requires careful state management.  
+a. User+Customer simplifies the model (1:1 relationship). A user cannot manage orders for multiple, different customers though.  
+b. Order is mutable until locked; requires careful state management.  
 c. Snapshotting product info into order lines duplicates data but preserves order history.  
-d. Hard to read external IDs are used mainly for cross service communication. Internal Ids help with CRUD admin operations.  
+d. Hard to read external IDs are used mainly for cross service communication.
+*Note*: With the introduction of OpenAPI/Swagger UI, and especially with the presence of a proper UI, using the external ID is less error prone and even transparent to the end user. Internal ids would not be used in inter-service communication, but only in intra-service communication (in isolation) and only where convenience is a clear winner over error prone scenarios. The internal ids remain important for db joins (fast).
+

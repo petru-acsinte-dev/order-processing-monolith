@@ -68,3 +68,8 @@ OrderProcessor - Daily journal
 - enhanced OpenAPI for auth controller
 - fixed 200 response on bad login with a custom AuthenticationEntryPoint
 - fixed swagger content for error response (no content for 401/403)
+
+2026-02-25
+-
+- renamed db tables for consistency (noticed that FlyWay and DevTools is not a good combination; if sql is partially saved, DevTools restarts the app migrating before the script is finished, resulting in errors on subsequent automatic restarts)
+- updated the design doc based on the in-flight decisions to use GitHub Actions (instead of Jenkins) and in-memory events for services communication
