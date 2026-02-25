@@ -43,6 +43,8 @@ import spring.orders.demo.users.entities.UserStatus;
 @AutoConfigureMockMvc
 class CustomerUserIT extends AbstractIntegrationTestBase {
 
+	private static final int EXPECTED_SAMPLE_DATA_USERS = 20;
+
 	private final Logger log = org.slf4j.LoggerFactory.getLogger(CustomerUserIT.class);
 
 	private final String firstUsername = "bobby"; //$NON-NLS-1$
@@ -99,7 +101,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
-				.andExpect(jsonPath("$.length()").value(1)) //$NON-NLS-1$
+				.andExpect(jsonPath("$.length()").value(expectedUsers(1))) //$NON-NLS-1$
 				.andExpect(jsonPath("$[0].username").value(Constants.ADMIN)) //$NON-NLS-1$
 				.andReturn();
 		if (log.isDebugEnabled()) {
@@ -111,18 +113,22 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	void createUsers() throws Exception {
 		createUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
-		getAllUsers(2);
+		getAllUsers(expectedUsers(2));
 
 		createUser(secondUsername, secondEmail, firstPassword, secondAddressLine1);
 		// getting both users (+ ADMIN)
-		getAllUsers(3);
+		getAllUsers(expectedUsers(3));
+	}
+
+	private int expectedUsers(int expectedByTest) {
+		return expectedByTest + EXPECTED_SAMPLE_DATA_USERS;
 	}
 
 	@Test
 	void updateUsers() throws Exception {
 		final CustomerUserResponse newUser = createUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting user (+ ADMIN)
-		getAllUsers(2);
+		getAllUsers(expectedUsers(2));
 
 		final var updateRequest = new UpdateCustomerUserRequest();
 		updateRequest.setEmail(newEmail);
@@ -146,18 +152,18 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		}
 
 		// getting user (+ ADMIN)
-		getAllUsers(2);
+		getAllUsers(expectedUsers(2));
 	}
 
 	@Test
 	void deleteUsers() throws Exception {
 		final CustomerUserResponse firstUser = createUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
-		getAllUsers(2);
+		getAllUsers(expectedUsers(2));
 
 		createUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting users (+ ADMIN)
-		getAllUsers(3);
+		getAllUsers(expectedUsers(3));
 
 		final MvcResult result = mockMvc.perform(delete(Constants.USERS_PATH)
 						.param(Constants.PARAM_EXTERNAL_ID, firstUser.getExternalId())
@@ -169,7 +175,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		}
 
 		// getting user (+ ADMIN)
-		final List<CustomerUserResponse> allUsers = getAllUsers(3);
+		final List<CustomerUserResponse> allUsers = getAllUsers(expectedUsers(3));
 		boolean found = false;
 		for (final CustomerUserResponse user : allUsers) {
 			if (user.getExternalId().equals(firstUser.getExternalId())) {

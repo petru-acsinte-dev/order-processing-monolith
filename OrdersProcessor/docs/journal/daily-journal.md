@@ -74,3 +74,5 @@ OrderProcessor - Daily journal
 - renamed db tables for consistency (noticed that FlyWay and DevTools is not a good combination; if sql is partially saved, DevTools restarts the app migrating before the script is finished, resulting in errors on subsequent automatic restarts)
 - updated the design doc based on the in-flight decisions to use GitHub Actions (instead of Jenkins) and in-memory events for services communication
 - fixed user creation without encrypted password: [Issue #2](https://github.com/petru-acsinte/order-processing/issues/2)
+- started work on products endpoint
+- created sample data for users and products; adjusted test expectations

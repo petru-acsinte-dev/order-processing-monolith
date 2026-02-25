@@ -50,9 +50,10 @@ Attributes: id (Long), externalId (UUID), username, email, role, status, externa
 Trade-offs: Simplifies the user-customer mapping; future multi-customers-per-user scenarios would require redesign.
 
 *2.2 Product*  
-Attributes: id (Long), sku, name, description, active, currentPrice (Money)  
+Attributes: id (Long), sku, name, description, active, currentPrice (Money) , external_id
 Trade-offs: no historical prices if products are not included in orders and their price changes in the meantime.   
 However order lines preserve history for already created orders.
+Note: external_id (UUID) was added later for consistency (and in case products ever get split into a different microservice)
 
 *2.3 Order and OrderLine*  
 Order: id (Long), externalId (UUID), customerExternalId, status, totalAmount (Money), createdAt  
