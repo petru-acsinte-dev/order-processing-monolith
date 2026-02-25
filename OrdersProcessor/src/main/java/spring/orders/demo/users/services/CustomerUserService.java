@@ -112,6 +112,8 @@ public class CustomerUserService {
 
 		partialEntity.setCreated(LocalDateTime.now());
 
+		partialEntity.setPassword(passwordEncoder.encode(createRequest.getPassword()));
+
 		log.debug("Saving new user..."); //$NON-NLS-1$
 		final CustomerUser newUser;
 		try {
@@ -139,22 +141,17 @@ public class CustomerUserService {
 
 		log.debug("updateUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
 		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
-		if (null != userUpdateRequest.getEmail()) {
-			user.setEmail(userUpdateRequest.getEmail());
-		}
-		if (null != userUpdateRequest.getAddress()) {
-			user.setAddress(addressMapper.toEntity(userUpdateRequest.getAddress()));
-		}
-		if (null != userUpdateRequest.getPassword()) {
-			user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
-		}
-
-		final CustomerUser updatedUser;
 		try {
-			log.debug("Updating user {}", user.getId()); //$NON-NLS-1$
-			updatedUser = userRepository.save(user);
-			log.info("User {} updated", user.getId()); //$NON-NLS-1$
-			return userMapper.toResponse(updatedUser);
+			if (null != userUpdateRequest.getEmail()) {
+				user.setEmail(userUpdateRequest.getEmail());
+			}
+			if (null != userUpdateRequest.getAddress()) {
+				user.setAddress(addressMapper.toEntity(userUpdateRequest.getAddress()));
+			}
+			if (null != userUpdateRequest.getPassword()) {
+				user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
+			}
+			return userMapper.toResponse(user);
 		} catch (final DataIntegrityViolationException ex) {
 			log.warn("{} encountered whilst updating user {}", //$NON-NLS-1$
 					ex.getClass().getCanonicalName(), user.getExternalId());

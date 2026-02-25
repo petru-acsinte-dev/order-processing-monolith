@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +51,11 @@ import spring.orders.demo.users.services.CustomerUserService;
 @ExtendWith(MockitoExtension.class)
 public class CustomerUserServiceTest {
 
+	private static final String DAN = "dan"; //$NON-NLS-1$
+	private static final String DAN_EMAIL = "dan@dev.com"; //$NON-NLS-1$
+	private static final String BOBBY = "bobby"; //$NON-NLS-1$
+	private static final String BOBBY_EMAIL = "bobby@dev.com"; //$NON-NLS-1$
+	private static final String BAD_PSWD = "1234"; //$NON-NLS-1$
 	private static final String UUID0 = "00000000-0000-0000-0000-000000000000"; //$NON-NLS-1$
 	private static final String ACTIVE = "ACTIVE"; //$NON-NLS-1$
 
@@ -66,6 +70,9 @@ public class CustomerUserServiceTest {
 
 	@Mock
 	private CustomerUserMapper userMapper;
+
+	@Mock
+	private PasswordEncoder passwordEncoder;
 
 	@InjectMocks
 	private CustomerUserService service;
@@ -92,30 +99,30 @@ public class CustomerUserServiceTest {
 	@Test
 	@DisplayName("Tests that the admin can create a regular user")
 	void testCreateUserAsAdmin() {
-		createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
 	}
 
 	@Test
 	@DisplayName("Tests that a non-admin user cannot create a regular user")
 	void testCreateUserAsNonAdmin() {
-		createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
 
 		assertThrows(UnauthorizedOperationException.class,
-				() -> createAs("bobby", "dan", "dan@dev.com"));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+				() -> createAs(BOBBY, DAN, DAN_EMAIL, BAD_PSWD));
 	}
 
 	@Test
 	@DisplayName("Tests updating the email + address for an existing user")
 	void testUpdateUserAsAdmin() {
-		final CustomerUser newUser = createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		final CustomerUser newUser = createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
 
-		updateAs(Constants.ADMIN, newUser, "newbobby@dev.com", new AddressDTO("LA LA"));  //$NON-NLS-1$//$NON-NLS-2$
+		updateAs(Constants.ADMIN, newUser, "newbobby@dev.com", new AddressDTO("LA LA"), BAD_PSWD);  //$NON-NLS-1$//$NON-NLS-2$
 	}
 
 	@Test
 	@DisplayName("Tests deleting an existing user")
 	void testDeleteUserAsAdmin() {
-		final CustomerUser newUser = createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		final CustomerUser newUser = createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
 
 		given(userRepository.findByUsername(Constants.ADMIN))
     		.willReturn(Optional.of(getAdminUser()));
@@ -134,17 +141,19 @@ public class CustomerUserServiceTest {
 	@Test
 	@DisplayName("Tests that updating as non-admin not possible")
 	void testUpdateUserAsNonAdmin() {
-		final CustomerUser newUser = createAs(Constants.ADMIN, "bobby", "bobby@dev.com");  //$NON-NLS-1$//$NON-NLS-2$
+		final CustomerUser newUser = createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
 
 		final AddressDTO newAddress = new AddressDTO("LA LA"); //$NON-NLS-1$
 		assertThrows(UnauthorizedOperationException.class,
-				() -> updateAs("bobby", newUser, "newbobby@dev.com", newAddress));  //$NON-NLS-1$//$NON-NLS-2$
+				() -> updateAs(BOBBY, newUser, "newbobby@dev.com", newAddress, BAD_PSWD));  //$NON-NLS-1$
 	}
 
-	private void updateAs(String requestorIdentifier, CustomerUser existingUser, String email, AddressDTO address) {
+	private void updateAs(String requestorIdentifier, CustomerUser existingUser,
+						String email, AddressDTO address, String newPassword) {
 		final UpdateCustomerUserRequest updateRequest = new UpdateCustomerUserRequest();
 		updateRequest.setEmail(email);
 		updateRequest.setAddress(address);
+		updateRequest.setPassword(passwordEncoder.encode(newPassword));
 
 		final CustomerUser adminUser = getAdminUser();
 
@@ -157,18 +166,21 @@ public class CustomerUserServiceTest {
 
 		service.updateUser(requestorIdentifier, existingUser.getExternalId(), updateRequest);
 
-		// create + update
-		verify(userRepository, times(2)).save(any(CustomerUser.class));
+		verify(userRepository).save(any(CustomerUser.class));
 
 	}
 
-	private CustomerUser createAs(String requestorIdentifier, String newUsername, String newEmail) {
+	private CustomerUser createAs(String requestorIdentifier, String newUsername, String newEmail, String newPassword) {
 		final var createRequest = new CreateCustomerUserRequest();
 		createRequest.setUsername(newUsername);
 		createRequest.setEmail(newEmail);
 		createRequest.setAddress(new AddressDTO("NY NY")); //$NON-NLS-1$
+		createRequest.setPassword(newPassword);
 
 		final CustomerUser adminUser = getAdminUser();
+
+		given(passwordEncoder.encode(newPassword))
+			.willReturn(staticEncoder.encode(newPassword));
 
 		try (MockedStatic<UUID> mockedUUID = Mockito.mockStatic(UUID.class)) {
             final UUID staticUUID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000"); //$NON-NLS-1$
@@ -203,6 +215,7 @@ public class CustomerUserServiceTest {
 		final CustomerUser entity = new CustomerUser();
 		entity.setUsername(createRequest.getUsername());
 		entity.setEmail(createRequest.getEmail());
+		entity.setPassword(passwordEncoder.encode(createRequest.getPassword()));
 
 		mockAddress(createRequest.getAddress());
 
@@ -246,7 +259,7 @@ public class CustomerUserServiceTest {
 			.thenReturn(response);
 	}
 
-	private static PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+	private static PasswordEncoder staticEncoder = new BCryptPasswordEncoder();
 	public static CustomerUser getAdminUser() {
 		final CustomerUser admin = new CustomerUser();
 		admin.setId(0L);
@@ -259,7 +272,7 @@ public class CustomerUserServiceTest {
 		final Address address = new Address();
 		address.setAddressLine1("3401 Hillview Avenue, Palo Alto, CA 94304, USA"); //$NON-NLS-1$
 		admin.setAddress(address);
-		admin.setPassword(passwordEncoder.encode(Constants.ADMIN));
+		admin.setPassword(staticEncoder.encode(Constants.ADMIN));
 		return admin;
 	}
 
