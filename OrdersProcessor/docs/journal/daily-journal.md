@@ -84,3 +84,5 @@ OrderProcessor - Daily journal
 - using Money embeddable for Product entity
 - defined product DTOs + mappers and mappers test
 - make product SKU immutable; once created it cannot be changed through a request
+- regenerated OrderProcessor-ER diagram to reflect the latest relational changes
+- 

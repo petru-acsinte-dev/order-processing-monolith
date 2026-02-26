@@ -50,7 +50,7 @@ Attributes: id (Long), externalId (UUID), username, email, role, status, externa
 Trade-offs: Simplifies the user-customer mapping; future multi-customers-per-user scenarios would require redesign.
 
 *2.2 Product*  
-Attributes: id (Long), sku, name, description, active, currentPrice (Money) , external_id
+Attributes: id (Long), sku, name, description, active, cost (Money) , external_id
 Trade-offs: no historical prices if products are not included in orders and their price changes in the meantime.   
 However order lines preserve history for already created orders.
 Note: external_id (UUID) was added later for consistency (and in case products ever get split into a different microservice)
@@ -79,7 +79,7 @@ Simplified. Outside the scope of this project (for now).
 *x-USER* request header can be used to identify a user/customer through their unique email
 
 *b. Product selection*  
-Products retrieved via API; sku and currentPrice exposed
+Products retrieved via API; sku and cost exposed
 
 *c. Order creation and management*  
 Order created on first selection; OrderLines preserve currentPrice
