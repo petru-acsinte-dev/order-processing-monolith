@@ -80,6 +80,7 @@ OrderProcessor - Daily journal
 2026-02-26
 -
 - tidying up validation annotations, reorganizing packages
-- simplifying currency for products; removing the currency entity
+- simplifying currency for products; removing the currency entity (reason: it's supposed to be predefined and immutable for this project; no rates changes either or other aspects that would make currency mutable)
 - using Money embeddable for Product entity
-- defined product DTOs
+- defined product DTOs + mappers and mappers test
+- make product SKU immutable; once created it cannot be changed through a request

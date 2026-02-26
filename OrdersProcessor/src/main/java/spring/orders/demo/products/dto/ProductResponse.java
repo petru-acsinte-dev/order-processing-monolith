@@ -13,12 +13,25 @@ public class ProductResponse extends AbstractProductDTO {
 			example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
 	private String externalId;
 
+	@NotBlank
+	@Schema(description = "Unique product identifier; cannot be changed once defined",
+			example = "SKU-107435")
+	private String sku;
+
 	public String getExternalId() {
 		return externalId;
 	}
 
 	public void setExternalId(String externalId) {
 		this.externalId = externalId;
+	}
+
+	public String getSku() {
+		return sku;
+	}
+
+	public void setSku(String sku) {
+		this.sku = sku;
 	}
 
 }

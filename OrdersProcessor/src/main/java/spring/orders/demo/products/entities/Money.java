@@ -4,16 +4,14 @@ import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.Objects;
 
-import jakarta.persistence.Access;
-import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import spring.orders.demo.products.exceptions.NonMatchingCurrencyException;
 
 @Embeddable
-@Access(AccessType.FIELD)
 public class Money {
 
 	@NotNull
@@ -22,9 +20,11 @@ public class Money {
 	private BigDecimal amount;
 
 	@NotNull
+	@Column(name = "currency", length = 3)
+	@Convert(converter = CurrencyConverter.class)
 	private Currency currency; // ISO 4217 code
 
-	protected Money() {}
+	private Money() {}
 
 	private Money(@NotNull @PositiveOrZero BigDecimal amount, @NotNull Currency currency) {
 		if (amount.compareTo(BigDecimal.ZERO) < 0) {
@@ -38,15 +38,15 @@ public class Money {
 		return new Money(amount, currency);
 	}
 
-	public BigDecimal amount() {
+	// no setters; immutable
+
+	public BigDecimal getAmount() {
 		return amount;
 	}
 
-	public Currency currency() {
+	public Currency getCurrency() {
 		return currency;
 	}
-
-	// no setters; immutable
 
 	public Money add(Money money) {
 		checkCurrency(money);
@@ -55,14 +55,14 @@ public class Money {
 
 	public Money multiply(Money money) {
 		checkCurrency(money);
-		return Money.of(amount.multiply(money.amount()), currency);
+		return Money.of(amount.multiply(money.getAmount()), currency);
 	}
 
 	private void checkCurrency(Money money) {
 		if (null == money) {
 			throw new IllegalArgumentException("Money cannot be null"); //$NON-NLS-1$
 		}
-		if (currency.equals(money.currency())) {
+		if (currency.equals(money.getCurrency())) {
 			return;
 		}
 		throw new NonMatchingCurrencyException(currency.getCurrencyCode(), money.currency.getCurrencyCode());

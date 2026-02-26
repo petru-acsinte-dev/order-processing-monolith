@@ -7,11 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 public abstract class AbstractProductDTO {
 
 	@NotBlank
-	@Schema(description = "Unique product identifier",
-			example = "SKU-107435")
-	private String sku;
-
-	@NotBlank
 	@Schema(example = "Logitech K380 Keyboard")
 	private String name;
 
@@ -23,14 +18,6 @@ public abstract class AbstractProductDTO {
 
 	@Valid
 	private MoneyDTO cost;
-
-	public String getSku() {
-		return sku;
-	}
-
-	public void setSku(String sku) {
-		this.sku = sku;
-	}
 
 	public String getName() {
 		return name;
