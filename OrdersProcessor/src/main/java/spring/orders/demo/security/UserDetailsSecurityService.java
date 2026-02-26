@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
-import spring.orders.demo.users.entities.UserStatus;
+import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
 
 @Service

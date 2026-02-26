@@ -31,13 +31,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 
-import spring.orders.demo.Constants;
+import spring.orders.demo.constants.Constants;
+import spring.orders.demo.constants.UserRole;
+import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
-import spring.orders.demo.users.entities.UserRole;
-import spring.orders.demo.users.entities.UserStatus;
 
 @Tag("integration")
 @AutoConfigureMockMvc

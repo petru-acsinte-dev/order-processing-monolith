@@ -13,7 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "customer_user", schema = "users")
@@ -26,13 +26,13 @@ public class CustomerUser {
 	@Column(name = "external_id")
 	private UUID externalId;
 
-	@NotBlank
+	@NotNull
 	private String username;
 
-	@NotBlank
+	@NotNull
 	private String email;
 
-	@NotBlank
+	@NotNull
 	private String password;
 
 	private LocalDateTime created;

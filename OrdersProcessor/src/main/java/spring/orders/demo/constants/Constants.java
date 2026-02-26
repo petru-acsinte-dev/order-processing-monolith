@@ -1,4 +1,4 @@
-package spring.orders.demo;
+package spring.orders.demo.constants;
 
 public final class Constants {
 
@@ -8,6 +8,8 @@ public final class Constants {
 	public static final String ADMIN = "ADMIN"; //$NON-NLS-1$
 
 	public static final String USERS_PATH = "/users"; //$NON-NLS-1$
+
+	public static final String PRODUCTS_PATH = "/products"; //$NON-NLS-1$
 
 	public static final String LOGIN_PATH = "/login/auth"; //$NON-NLS-1$
 

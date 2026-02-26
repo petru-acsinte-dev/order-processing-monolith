@@ -20,11 +20,11 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.ActiveProfiles;
 
+import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.security.AuthController;
 import spring.orders.demo.security.AuthRequest;
 import spring.orders.demo.security.AuthResponse;
 import spring.orders.demo.security.JWTService;
-import spring.orders.demo.users.entities.UserRole;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

@@ -76,3 +76,8 @@ OrderProcessor - Daily journal
 - fixed user creation without encrypted password: [Issue #2](https://github.com/petru-acsinte/order-processing/issues/2)
 - started work on products endpoint
 - created sample data for users and products; adjusted test expectations
+
+2026-02-26
+-
+- tidying up validation annotations, reorganizing packages
+- 

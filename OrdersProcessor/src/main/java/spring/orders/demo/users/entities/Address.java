@@ -2,15 +2,15 @@ package spring.orders.demo.users.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Embeddable
 public class Address {
 
-	@NotBlank
+	@NotNull
 	@Column (name = "address_line1", nullable = false)
 	private String addressLine1;
-	
+
 	@Column (name = "address_line2")
 	private String addressLine2;
 
@@ -29,5 +29,5 @@ public class Address {
 	public void setAddressLine2(String addressLine2) {
 		this.addressLine2 = addressLine2;
 	}
-	
+
 }

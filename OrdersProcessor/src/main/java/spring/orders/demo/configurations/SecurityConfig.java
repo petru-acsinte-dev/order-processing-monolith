@@ -14,7 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import spring.orders.demo.Constants;
+import spring.orders.demo.constants.Constants;
 import spring.orders.demo.filters.JWTFilter;
 import spring.orders.demo.filters.JsonLoginFilter;
 import spring.orders.demo.security.JWTService;

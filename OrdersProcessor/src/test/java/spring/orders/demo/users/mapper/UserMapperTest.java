@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import spring.orders.demo.constants.UserRole;
+import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
@@ -21,8 +23,6 @@ import spring.orders.demo.users.entities.Address;
 import spring.orders.demo.users.entities.CustomerUser;
 import spring.orders.demo.users.entities.Role;
 import spring.orders.demo.users.entities.Status;
-import spring.orders.demo.users.entities.UserRole;
-import spring.orders.demo.users.entities.UserStatus;
 import spring.orders.demo.users.mappers.AddressMapper;
 import spring.orders.demo.users.mappers.AddressMapperImpl;
 import spring.orders.demo.users.mappers.CustomerUserMapper;

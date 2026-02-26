@@ -1,4 +1,4 @@
-package spring.orders.demo.users.entities;
+package spring.orders.demo.constants;
 
 public class UserRole {
 

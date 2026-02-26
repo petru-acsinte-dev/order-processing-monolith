@@ -21,7 +21,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import spring.orders.demo.Constants;
+import spring.orders.demo.constants.Constants;
 import spring.orders.demo.security.AuthError;
 import spring.orders.demo.security.AuthRequest;
 import spring.orders.demo.security.JWTService;

@@ -13,14 +13,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import spring.orders.demo.constants.UserRole;
+import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
 import spring.orders.demo.users.entities.CustomerUser;
 import spring.orders.demo.users.entities.Role;
 import spring.orders.demo.users.entities.Status;
-import spring.orders.demo.users.entities.UserRole;
-import spring.orders.demo.users.entities.UserStatus;
 import spring.orders.demo.users.exceptions.DuplicateUserException;
 import spring.orders.demo.users.exceptions.InvalidStatusException;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;

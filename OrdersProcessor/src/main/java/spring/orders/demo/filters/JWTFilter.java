@@ -14,7 +14,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import spring.orders.demo.Constants;
+import spring.orders.demo.constants.Constants;
 import spring.orders.demo.security.JWTService;
 import spring.orders.demo.security.UserDetailsSecurityService;
 
