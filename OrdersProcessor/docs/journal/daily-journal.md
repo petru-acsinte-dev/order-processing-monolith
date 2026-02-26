@@ -80,4 +80,6 @@ OrderProcessor - Daily journal
 2026-02-26
 -
 - tidying up validation annotations, reorganizing packages
-- 
+- simplifying currency for products; removing the currency entity
+- using Money embeddable for Product entity
+- defined product DTOs
