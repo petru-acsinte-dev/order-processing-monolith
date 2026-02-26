@@ -1,6 +1,7 @@
 package spring.orders.demo.products.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -17,6 +18,20 @@ public class ProductResponse extends AbstractProductDTO {
 	@Schema(description = "Unique product identifier; cannot be changed once defined",
 			example = "SKU-107435")
 	private String sku;
+
+	protected ProductResponse() {}
+
+	public ProductResponse(
+						@NotBlank String externalId,
+						@NotBlank String sku,
+						@NotBlank String name,
+						String description,
+						boolean active,
+						@Valid MoneyDTO cost) {
+		super(name, description, active, cost);
+		this.externalId = externalId;
+		this.sku = sku;
+	}
 
 	public String getExternalId() {
 		return externalId;

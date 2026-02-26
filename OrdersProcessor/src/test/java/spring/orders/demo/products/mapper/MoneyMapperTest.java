@@ -28,7 +28,7 @@ import spring.orders.demo.products.mappers.ProductMapperImpl;
 @Tag("mapper")
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {MoneyMapperImpl.class, ProductMapperImpl.class})
-public class MoneyMapperTest {
+class MoneyMapperTest {
 
 	private static final String CAD = "CAD"; //$NON-NLS-1$
 
@@ -55,13 +55,7 @@ public class MoneyMapperTest {
 		final String description = "Monochrome laser printer with duplex printing"; //$NON-NLS-1$
 
 		{ // to DTO
-			final Product product = new Product();
-			product.setExternalId(uuid);
-			product.setName(name);
-			product.setSku(sku);
-			product.setDescription(description);
-			product.setActive(true);
-			product.setCost(cad);
+			final Product product = new Product(1L, uuid, sku, name, description, true, cad);
 
 			final ProductResponse response = productMapper.toResponse(product);
 			assertEquals(cadDTO, response.getCost());

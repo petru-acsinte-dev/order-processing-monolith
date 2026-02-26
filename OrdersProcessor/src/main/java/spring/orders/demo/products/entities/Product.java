@@ -38,6 +38,34 @@ public class Product {
 	@Embedded
 	Money cost;
 
+	protected Product() {}
+
+	/**
+	 * Constructs a full product entity (mainly for unit testing)
+	 * @param id
+	 * @param externalId
+	 * @param sku
+	 * @param name
+	 * @param description
+	 * @param active
+	 * @param cost
+	 */
+	public Product(Long id,
+			@NotNull UUID externalId,
+			@NotNull String sku,
+			@NotNull String name,
+					String description,
+					boolean active,
+					Money cost) {
+		this.id = id;
+		this.externalId = externalId;
+		this.sku = sku;
+		this.name = name;
+		this.description = description;
+		this.active = active;
+		this.cost = cost;
+	}
+
 	public Long getId() {
 		return id;
 	}

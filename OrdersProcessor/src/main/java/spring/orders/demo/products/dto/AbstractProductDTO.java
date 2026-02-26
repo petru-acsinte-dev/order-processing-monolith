@@ -19,6 +19,15 @@ public abstract class AbstractProductDTO {
 	@Valid
 	private MoneyDTO cost;
 
+	protected AbstractProductDTO() {}
+
+	protected AbstractProductDTO(@NotBlank String name, String description, boolean active, @Valid MoneyDTO cost) {
+		this.name = name;
+		this.description = description;
+		this.active = active;
+		this.cost = cost;
+	}
+
 	public String getName() {
 		return name;
 	}
