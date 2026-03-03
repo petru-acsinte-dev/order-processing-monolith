@@ -40,7 +40,7 @@ public class Product {
 	@Embedded
 	Money cost;
 
-	protected Product() {}
+	public Product() {} // used by tests mocks; hence not protected
 
 	/**
 	 * @param sku

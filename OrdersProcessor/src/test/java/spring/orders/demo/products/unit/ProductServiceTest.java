@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
@@ -35,6 +36,7 @@ import spring.orders.demo.constants.Constants;
 import spring.orders.demo.products.dto.CreateProductRequest;
 import spring.orders.demo.products.dto.MoneyDTO;
 import spring.orders.demo.products.dto.ProductResponse;
+import spring.orders.demo.products.dto.UpdateProductRequest;
 import spring.orders.demo.products.entities.Money;
 import spring.orders.demo.products.entities.Product;
 import spring.orders.demo.products.mappers.ProductMapper;
@@ -150,7 +152,104 @@ class ProductServiceTest {
 		assertThrows(Exception.class, this::doCreateProduct);
 	}
 
-	private void doCreateProduct() {
+	@Test
+	void testUpdateProduct() {
+		final ProductResponse response = doCreateProduct();
+		assertDoesNotThrow(()->doUpdateProduct(response));
+	}
+
+	@Test
+	void testUpdateProductAsRegularUser() {
+		final ProductResponse response = doCreateProduct();
+
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken(Constants.ADMIN, Constants.ADMIN));
+
+		assertThrows(Exception.class, ()->doUpdateProduct(response));
+	}
+
+	@Test
+	void testDeleteProduct() {
+		final ProductResponse response = doCreateProduct();
+		assertDoesNotThrow(()->doDeleteProduct(response));
+	}
+
+	@Test
+	void testDeleteProductAsRegularUser() {
+		final ProductResponse response = doCreateProduct();
+
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken(Constants.ADMIN, Constants.ADMIN));
+
+		assertThrows(Exception.class, ()->doDeleteProduct(response));
+	}
+
+	private void doDeleteProduct(ProductResponse creationResponse) {
+		final UUID externalId = UUID.fromString(creationResponse.getExternalId());
+		final Optional<Product> found = mockEntity(creationResponse, true);
+		final var expectedResponse = new ProductResponse(externalId.toString(),
+														creationResponse.getSku(),
+														creationResponse.getName(),
+														creationResponse.getDescription(),
+														false,
+														creationResponse.getCost());
+
+		lenient().when(repository.findByExternalId(externalId))
+				.thenReturn(found);
+		final Optional<Product> deleted = mockEntity(creationResponse, false);
+		lenient().when(repository.save(found.get()))
+    			.thenReturn(deleted.get());
+		lenient().when(mapper.toResponse(found.get()))
+    			.thenReturn(expectedResponse);
+
+		final ProductResponse response = service.deleteProduct(externalId);
+
+		assertEquals(creationResponse.getName(), response.getName());
+        assertEquals(creationResponse.getCost().getAmount(), response.getCost().getAmount());
+        assertEquals(creationResponse.getCost().getCurrency(), response.getCost().getCurrency());
+        assertEquals(creationResponse.getSku(), response.getSku());
+        assertEquals(false, response.isActive());
+        assertEquals(creationResponse.getDescription(), response.getDescription());
+	}
+
+	private void doUpdateProduct(ProductResponse creationResponse) {
+		final String newName = "LG UltraWide Monitor (34\")";  //$NON-NLS-1$
+		final String desc = creationResponse.getDescription(); // unchanged
+		final MoneyDTO newCost = new MoneyDTO(BigDecimal.valueOf(425.98), Currency.getInstance(CAD));
+		final UpdateProductRequest updateRequest = new UpdateProductRequest();
+		updateRequest.setName(newName);
+		updateRequest.setCost(newCost);
+
+		final Product updated = mockEntity(creationResponse, updateRequest);
+		final UUID externalId = UUID.fromString(creationResponse.getExternalId());
+		final var expectedResponse = new ProductResponse(externalId.toString(),
+														creationResponse.getSku(),
+														newName,
+														desc,
+														true,
+														newCost);
+
+        // lenient() allows testing as regular user when an exception is thrown early
+		final Optional<Product> found = mockEntity(creationResponse, true);
+		lenient().when(repository.findByExternalId(externalId))
+			.thenReturn(found);
+        lenient().when(repository.save(found.get()))
+        	.thenReturn(updated);
+        lenient().when(mapper.toResponse(found.get()))
+        	.thenReturn(expectedResponse);
+
+        final ProductResponse response = service.updateProduct(externalId, updateRequest);
+
+        assertEquals(newName, response.getName());
+        assertEquals(newCost.getAmount(), response.getCost().getAmount());
+        assertEquals(newCost.getCurrency(), response.getCost().getCurrency());
+        assertEquals(creationResponse.getSku(), response.getSku());
+        assertEquals(true, response.isActive());
+        assertEquals(desc, response.getDescription());
+
+	}
+
+	private ProductResponse doCreateProduct() {
 		final String sku = "SKU-000001"; //$NON-NLS-1$
 		final String name = "LG 34\" UltraWide Monitor";  //$NON-NLS-1$
 		final String desc = "34-inch curved IPS monitor"; //$NON-NLS-1$
@@ -186,6 +285,8 @@ class ProductServiceTest {
             assertEquals(true, response.isActive());
             assertEquals(productRequest.getDescription(), response.getDescription());
             assertEquals(expectedExternalId, response.getExternalId());
+
+            return response;
 		}
 	}
 
@@ -200,6 +301,34 @@ class ProductServiceTest {
 			.thenReturn(entity);
 
 		return entity;
+	}
+
+	private Product mockEntity(ProductResponse creationResponse, UpdateProductRequest updateRequest) {
+		final Product entity = new Product();
+		if (null != updateRequest.getDescription()) {
+			entity.setDescription(updateRequest.getDescription());
+		}
+		if (null != updateRequest.getName()) {
+			entity.setName(updateRequest.getName());
+		}
+		if (null != updateRequest.getCost()) {
+			entity.setCost(mockCost(updateRequest.getCost()));
+		}
+		entity.setExternalId(UUID.fromString(creationResponse.getExternalId()));
+		entity.setActive(true);
+
+		lenient().when(mapper.toEntity(updateRequest))
+			.thenReturn(entity);
+
+		return entity;
+	}
+
+	private Optional<Product> mockEntity(ProductResponse creationResponse, boolean active) {
+		final Product entity = new Product(creationResponse.getSku(), creationResponse.getName(), mockCost(creationResponse.getCost()));
+		entity.setActive(active);
+		entity.setDescription(creationResponse.getDescription());
+		entity.setExternalId(UUID.fromString(creationResponse.getExternalId()));
+		return Optional.of(entity);
 	}
 
 	private Money mockCost(MoneyDTO cost) {
