@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,6 +72,7 @@ class ProductServiceTest {
     }
 
 	@Test
+	@DisplayName("Retrieves products from the system")
 	void testGetAllProducts() {
 		final UUID uuid1 = UUID.randomUUID();
 		final UUID uuid2 = UUID.randomUUID();
@@ -140,11 +142,13 @@ class ProductServiceTest {
 	}
 
 	@Test
+	@DisplayName("Tests product creation")
 	void testCreateProduct() {
 		assertDoesNotThrow(this::doCreateProduct);
 	}
 
 	@Test
+	@DisplayName("Tests that creating a product as non-admin not possible")
 	void testCreateProductAsRegularUser() {
 		SecurityContextHolder.getContext().setAuthentication(
 				new UsernamePasswordAuthenticationToken(Constants.ADMIN, Constants.ADMIN));
@@ -153,12 +157,14 @@ class ProductServiceTest {
 	}
 
 	@Test
+	@DisplayName("Tests product modification")
 	void testUpdateProduct() {
 		final ProductResponse response = doCreateProduct();
 		assertDoesNotThrow(()->doUpdateProduct(response));
 	}
 
 	@Test
+	@DisplayName("Tests that updating a product as non-admin not possible")
 	void testUpdateProductAsRegularUser() {
 		final ProductResponse response = doCreateProduct();
 
@@ -169,12 +175,14 @@ class ProductServiceTest {
 	}
 
 	@Test
+	@DisplayName("Tests product archival")
 	void testDeleteProduct() {
 		final ProductResponse response = doCreateProduct();
 		assertDoesNotThrow(()->doDeleteProduct(response));
 	}
 
 	@Test
+	@DisplayName("Tests that deleting a product as non-admin not possible")
 	void testDeleteProductAsRegularUser() {
 		final ProductResponse response = doCreateProduct();
 
