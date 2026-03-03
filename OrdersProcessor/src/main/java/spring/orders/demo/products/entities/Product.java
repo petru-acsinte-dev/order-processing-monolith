@@ -9,6 +9,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -41,28 +43,15 @@ public class Product {
 	protected Product() {}
 
 	/**
-	 * Constructs a full product entity (mainly for unit testing)
-	 * @param id
-	 * @param externalId
 	 * @param sku
 	 * @param name
-	 * @param description
-	 * @param active
 	 * @param cost
 	 */
-	public Product(Long id,
-			@NotNull UUID externalId,
-			@NotNull String sku,
-			@NotNull String name,
-					String description,
-					boolean active,
-					Money cost) {
-		this.id = id;
-		this.externalId = externalId;
+	public Product(	@NotBlank String sku,
+					@NotBlank String name,
+					@Valid Money cost) {
 		this.sku = sku;
 		this.name = name;
-		this.description = description;
-		this.active = active;
 		this.cost = cost;
 	}
 

@@ -7,6 +7,8 @@ public final class Constants {
 
 	public static final String ADMIN = "ADMIN"; //$NON-NLS-1$
 
+	public static final String ADMIN_ROLE = "ROLE_ADMIN"; //$NON-NLS-1$
+
 	public static final String USERS_PATH = "/users"; //$NON-NLS-1$
 
 	public static final String PRODUCTS_PATH = "/products"; //$NON-NLS-1$

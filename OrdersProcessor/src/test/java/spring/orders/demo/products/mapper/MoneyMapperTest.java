@@ -55,7 +55,9 @@ class MoneyMapperTest {
 		final String description = "Monochrome laser printer with duplex printing"; //$NON-NLS-1$
 
 		{ // to DTO
-			final Product product = new Product(1L, uuid, sku, name, description, true, cad);
+			final Product product = new Product(sku, name, cad);
+			product.setDescription(description);
+			product.setExternalId(uuid);
 
 			final ProductResponse response = productMapper.toResponse(product);
 			assertEquals(cadDTO, response.getCost());
