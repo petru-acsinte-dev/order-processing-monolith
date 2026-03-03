@@ -90,3 +90,4 @@ OrderProcessor - Daily journal
 2026-03-03
 -
 - product service update + delete unit tests
+- created product controller
