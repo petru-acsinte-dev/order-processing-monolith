@@ -1,47 +1,36 @@
 package spring.orders.demo.users.integration;
 
-import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 
 import spring.orders.demo.AbstractIntegrationTestBase;
 import spring.orders.demo.constants.Constants;
-import spring.orders.demo.constants.UserRole;
-import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.users.dto.AddressDTO;
-import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
 
-@Tag("integration")
-@AutoConfigureMockMvc
+@Transactional
 class CustomerUserIT extends AbstractIntegrationTestBase {
 
 	private static final int EXPECTED_SAMPLE_DATA_USERS = 20;
@@ -61,44 +50,18 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	private final String newEmail = "newemail@order.processor.com"; //$NON-NLS-1$
 	private final String newAddressLine1 = "AU TX"; //$NON-NLS-1$
 
-	private static final String JSON_PATH_EXTERNAL_ID = "$.externalId"; //$NON-NLS-1$
-	private static final String JSON_PATH_ROLE = "$.role"; //$NON-NLS-1$
-	private static final String JSON_PATH_STATUS = "$.status"; //$NON-NLS-1$
-	private static final String JSON_PATH_ADDRESS_LINE1 = "$.address.addressLine1"; //$NON-NLS-1$
-	private static final String JSON_PATH_EMAIL = "$.email"; //$NON-NLS-1$
-	private static final String JSON_PATH_USERNAME = "$.username"; //$NON-NLS-1$
-
-	private static final String UUID_REGEX = "[a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}"; //$NON-NLS-1$
-
-	@Autowired
-	MockMvc mockMvc;
-
-	@Autowired
-	ObjectMapper objectMapper;
-
-	private String bearer;
-
 	@BeforeEach
 	void login() throws Exception {
-		final MvcResult result = mockMvc.perform(post(Constants.LOGIN_PATH)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON)
-				// {"username":"x","password":"y"} payload
-				.content(String.format("{\"username\":\"%s\",\"password\":\"%s\"}",  //$NON-NLS-1$
-						Constants.ADMIN, Constants.ADMIN)))
-			.andExpect(status().isOk())
-			.andReturn();
-		final String strContent = result.getResponse().getContentAsString();
-		final String token = JsonPath.read(strContent, "$.token"); //$NON-NLS-1$
-		bearer = Constants.BEARER + token;
+		loginAs(Constants.ADMIN, Constants.ADMIN);
 	}
 
 	@Test
+	@DisplayName("Tests retrieving existing users")
 	void testGetAllUsers() throws Exception {
 		final MvcResult result = mockMvc
 				.perform(get(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
-						.header(HttpHeaders.AUTHORIZATION, bearer))
+						.header(HttpHeaders.AUTHORIZATION, getBearer()))
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
@@ -111,12 +74,14 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	}
 
 	@Test
+	@DisplayName("Tests users creation")
+	@Rollback
 	void createUsers() throws Exception {
-		createUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
+		createAndValidateUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
 		getAllUsers(expectedUsers(2));
 
-		createUser(secondUsername, secondEmail, firstPassword, secondAddressLine1);
+		createAndValidateUser(secondUsername, secondEmail, firstPassword, secondAddressLine1);
 		// getting both users (+ ADMIN)
 		getAllUsers(expectedUsers(3));
 	}
@@ -126,8 +91,10 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	}
 
 	@Test
+	@DisplayName("Tests updating existing users")
+	@Rollback
 	void updateUsers() throws Exception {
-		final CustomerUserResponse newUser = createUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
+		final CustomerUserResponse newUser = createAndValidateUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting user (+ ADMIN)
 		getAllUsers(expectedUsers(2));
 
@@ -137,7 +104,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		updateRequest.setPassword(UUID.randomUUID().toString());
 		final MvcResult result = mockMvc.perform(patch(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
-						.header(HttpHeaders.AUTHORIZATION, bearer)
+						.header(HttpHeaders.AUTHORIZATION, getBearer())
 						.param(Constants.PARAM_EXTERNAL_ID, newUser.getExternalId())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(updateRequest)))
@@ -157,18 +124,20 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	}
 
 	@Test
+	@DisplayName("Tests deleting existing users")
+	@Rollback
 	void deleteUsers() throws Exception {
-		final CustomerUserResponse firstUser = createUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
+		final CustomerUserResponse firstUser = createAndValidateUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
 		getAllUsers(expectedUsers(2));
 
-		createUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
+		createAndValidateUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting users (+ ADMIN)
 		getAllUsers(expectedUsers(3));
 
 		final MvcResult result = mockMvc.perform(delete(Constants.USERS_PATH)
 						.param(Constants.PARAM_EXTERNAL_ID, firstUser.getExternalId())
-						.header(HttpHeaders.AUTHORIZATION, bearer))
+						.header(HttpHeaders.AUTHORIZATION, getBearer()))
 				.andExpect(status().isNoContent())
 				.andReturn();
 		if (log.isDebugEnabled()) {
@@ -191,10 +160,15 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		assertTrue("Deleted user not found", found); //$NON-NLS-1$
 	}
 
+	@Override
+	protected Logger getLog() {
+		return log;
+	}
+
 	private List<CustomerUserResponse> getAllUsers(int expectedNumberOfUsers) throws Exception {
 		final MvcResult result = mockMvc.perform(get(Constants.USERS_PATH)
 				.accept(MediaType.APPLICATION_JSON)
-				.header(HttpHeaders.AUTHORIZATION, bearer))
+				.header(HttpHeaders.AUTHORIZATION, getBearer()))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
@@ -207,35 +181,4 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		return objectMapper.readValue(content, new TypeReference<List<CustomerUserResponse>>() {});
 	}
 
-	private CustomerUserResponse createUser(String username, String email, String password, String addressLine) throws Exception {
-		final var createRequest = new CreateCustomerUserRequest();
-		createRequest.setUsername(username);
-		createRequest.setEmail(email);
-		createRequest.setPassword(password);
-		createRequest.setAddress(new AddressDTO(addressLine));
-
-		// first user
-		final MvcResult result = mockMvc.perform(post(Constants.USERS_PATH)
-						.accept(MediaType.APPLICATION_JSON)
-						.header(HttpHeaders.AUTHORIZATION, bearer)
-						.contentType(MediaType.APPLICATION_JSON)
-						.characterEncoding(StandardCharsets.UTF_8)
-						.content(objectMapper.writeValueAsString(createRequest)))
-						.andDo(print())
-				.andExpect(status().isCreated())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath(JSON_PATH_USERNAME).value(username))
-				.andExpect(jsonPath(JSON_PATH_EMAIL).value(email))
-				.andExpect(jsonPath(JSON_PATH_ADDRESS_LINE1).value(addressLine))
-				.andExpect(jsonPath(JSON_PATH_STATUS).value(UserStatus.ACTIVE))
-				.andExpect(jsonPath(JSON_PATH_ROLE).value(UserRole.USER))
-				.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID).isNotEmpty())
-				.andExpect(jsonPath(JSON_PATH_EXTERNAL_ID, matchesPattern(UUID_REGEX)))
-				.andReturn();
-		final String content = result.getResponse().getContentAsString();
-		if (log.isDebugEnabled()) {
-			log.debug(content);
-		}
-		return objectMapper.readValue(content, new TypeReference<CustomerUserResponse>() {});
-	}
 }
