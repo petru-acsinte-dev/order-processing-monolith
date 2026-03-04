@@ -23,7 +23,7 @@ import spring.orders.demo.constants.Constants;
 @RestController
 public class AuthController {
 
-	Logger log = org.slf4j.LoggerFactory.getLogger(AuthController.class);
+	private static Logger log = org.slf4j.LoggerFactory.getLogger(AuthController.class);
 
 	private final AuthenticationManager authManager;
 	private final JWTService jwtService;

@@ -45,7 +45,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 
 	private static final int EXPECTED_SAMPLE_DATA_USERS = 20;
 
-	private final Logger log = org.slf4j.LoggerFactory.getLogger(CustomerUserIT.class);
+	private static final Logger log = org.slf4j.LoggerFactory.getLogger(CustomerUserIT.class);
 
 	private final String firstUsername = "bobby"; //$NON-NLS-1$
 	private final String firstEmail = "bobby@order.processor.com"; //$NON-NLS-1$

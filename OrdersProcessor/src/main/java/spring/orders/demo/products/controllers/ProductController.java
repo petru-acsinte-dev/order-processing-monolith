@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -90,7 +92,7 @@ public class ProductController {
 		description = "Product not found",
 		content = @Content(schema = @Schema(hidden = true)))
 	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
-	@PatchMapping
+	@DeleteMapping
 	public ProductResponse deleteProduct(@RequestParam(required = true) @NotBlank String externalId) {
 		final UUID uuid = UUID.fromString(externalId);
 		return service.deleteProduct(uuid);
@@ -111,7 +113,7 @@ public class ProductController {
 			description = "Product not found",
 			content = @Content(schema = @Schema(hidden = true)))
 	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
-	@PatchMapping
+	@PostMapping
 	public ProductResponse createProduct(@Valid @RequestBody CreateProductRequest createRequest) {
 		return service.createProduct(createRequest);
 	}
