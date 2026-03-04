@@ -6,6 +6,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 public class SharedPostgresContainer {
+	@SuppressWarnings("resource")
 	public static final PostgreSQLContainer<?> POSTGRES =
 	        new PostgreSQLContainer<>("postgres:15") //$NON-NLS-1$
 	            .withDatabaseName("postgresdb") //$NON-NLS-1$
@@ -21,5 +22,12 @@ public class SharedPostgresContainer {
                         POSTGRES.getPassword())
             .load()
             .migrate();
+
+	        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+	            if (POSTGRES.isRunning()) {
+	                POSTGRES.stop();
+	                POSTGRES.close();
+	            }
+	        }));
 	    }
 }
