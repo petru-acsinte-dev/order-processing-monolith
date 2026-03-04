@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
@@ -34,6 +35,13 @@ public class ProductService {
 		this.mapper = mapper;
 	}
 
+
+	/**
+	 * Retrieves all the products from the database.
+	 * If the user has admin role, the inactive products are included as well.
+	 * @return A collection of {@link ProductResponse} representing the products.
+	 */
+	@Transactional(readOnly = true)
 	public List<ProductResponse> getAllProducts() {
 
 		final boolean filterInactive = ! SecurityUtils.hasRole(UserRole.ADMIN);
@@ -45,6 +53,12 @@ public class ProductService {
 			.toList();
 	}
 
+	/**
+	 * Creates a new product. Requires admin role.
+	 * @param createRequest The new product {@link CreateProductRequest} details.
+	 * @return A {@link ProductResponse} representing the new product state.
+	 */
+	@Transactional
 	public ProductResponse createProduct(CreateProductRequest createRequest) {
 		checkIfAdmin();
 
@@ -53,6 +67,13 @@ public class ProductService {
 		return mapper.toResponse(saved);
 	}
 
+	/**
+	 * Updates an existing product. Requires admin role.
+	 * @param externalId Product unique identifier.
+	 * @param updateRequest The product {@link UpdateProductRequest} changes.
+	 * @return A {@link ProductResponse} representing the product updated state.
+	 */
+	@Transactional
 	public ProductResponse updateProduct(UUID externalId, UpdateProductRequest updateRequest) {
 		checkIfAdmin();
 
@@ -72,6 +93,12 @@ public class ProductService {
 		return mapper.toResponse(product);
 	}
 
+	/**
+	 * Archives an existing product. Requires admin role.
+	 * @param externalId Product unique identifier.
+	 * @return A {@link ProductResponse} representing the product updated state.
+	 */
+	@Transactional
 	public ProductResponse deleteProduct(UUID externalId) {
 		checkIfAdmin();
 
