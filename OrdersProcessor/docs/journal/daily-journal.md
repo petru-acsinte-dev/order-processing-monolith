@@ -94,4 +94,8 @@ OrderProcessor - Daily journal
 
 2026-03-04
 -
-- 
+- product integration CRUD tests
+- moving common members/methods to IT base class
+- moving class in shared package
+- improved test setup performance by replacing heavy db construction before/after with a single FlyWay migration and using @Rollback in tests
+- various fixes for missed Java Doc, annotations etc.

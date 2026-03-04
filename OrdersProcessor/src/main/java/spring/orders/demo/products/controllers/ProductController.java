@@ -80,10 +80,10 @@ public class ProductController {
 	}
 
 	@Operation (summary = "Deletes a product",
-			description = "Admin operation which archives a product present in the system.")
+		description = "Admin operation which archives a product present in the system.")
 	@ApiResponse(responseCode = "204",
-	content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-			schema = @Schema(implementation = ProductResponse.class)))
+		description = "Product deleted successfully",
+		content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "403",
 		description = "User does not have the required priviledges",
 		content = @Content(schema = @Schema(hidden = true)))
@@ -95,9 +95,12 @@ public class ProductController {
 		content = @Content(schema = @Schema(hidden = true)))
 	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	@DeleteMapping
-	public ProductResponse deleteProduct(@RequestParam(required = true) @NotBlank String externalId) {
+	public ResponseEntity<ProductResponse> deleteProduct(@RequestParam(required = true) @NotBlank String externalId) {
 		final UUID uuid = UUID.fromString(externalId);
-		return service.deleteProduct(uuid);
+		service.deleteProduct(uuid);
+		return ResponseEntity
+				.noContent()
+				.build();
 	}
 
 	@Operation (summary = "Creates a product",

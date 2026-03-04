@@ -119,7 +119,7 @@ public class CustomUserController {
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
 	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
-	public ResponseEntity<CustomerUserResponse> updateUser(
+	public ResponseEntity<CustomerUserResponse> deleteUser(
 			@RequestParam (required = true) String externalId) {
 		final UUID external = UUID.fromString(externalId);
 		final String requestorIdentifier = getUsername();
