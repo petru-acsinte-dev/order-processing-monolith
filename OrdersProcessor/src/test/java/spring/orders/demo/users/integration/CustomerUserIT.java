@@ -24,8 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import spring.orders.demo.AbstractIntegrationTestBase;
 import spring.orders.demo.constants.Constants;
+import spring.orders.demo.shared.AbstractIntegrationTestBase;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 import spring.orders.demo.users.dto.UpdateCustomerUserRequest;

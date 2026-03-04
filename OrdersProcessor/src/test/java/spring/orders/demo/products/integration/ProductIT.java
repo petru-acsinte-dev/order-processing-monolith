@@ -19,8 +19,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import spring.orders.demo.AbstractIntegrationTestBase;
 import spring.orders.demo.constants.Constants;
+import spring.orders.demo.shared.AbstractIntegrationTestBase;
 
 @Transactional
 class ProductIT extends AbstractIntegrationTestBase{

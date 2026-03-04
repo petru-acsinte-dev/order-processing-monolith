@@ -1,4 +1,4 @@
-package spring.orders.demo;
+package spring.orders.demo.shared;
 
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
