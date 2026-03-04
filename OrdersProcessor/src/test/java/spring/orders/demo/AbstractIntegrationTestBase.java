@@ -1,4 +1,4 @@
-package spring.orders.demo.users.integration;
+package spring.orders.demo;
 
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterEach;
@@ -19,7 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles("test")
-class AbstractIntegrationTestBase {
+public abstract class AbstractIntegrationTestBase {
 
 	@Autowired
 	Flyway flyWay;
