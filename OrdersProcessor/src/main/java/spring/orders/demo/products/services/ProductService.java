@@ -63,6 +63,8 @@ public class ProductService {
 		checkIfAdmin();
 
 		final Product newProduct = mapper.toEntity(createRequest);
+		newProduct.setActive(true);
+		newProduct.setExternalId(UUID.randomUUID());
 		final Product saved = repository.save(newProduct);
 		return mapper.toResponse(saved);
 	}

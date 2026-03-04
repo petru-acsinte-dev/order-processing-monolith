@@ -1,9 +1,11 @@
 package spring.orders.demo.products.controllers;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -100,7 +102,7 @@ public class ProductController {
 
 	@Operation (summary = "Creates a product",
 			description = "Admin operation which creates a product in the system.")
-	@ApiResponse(responseCode = "200",
+	@ApiResponse(responseCode = "201",
 	content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
 		schema = @Schema(implementation = ProductResponse.class)))
 	@ApiResponse (responseCode = "403",
@@ -114,7 +116,11 @@ public class ProductController {
 			content = @Content(schema = @Schema(hidden = true)))
 	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	@PostMapping
-	public ProductResponse createProduct(@Valid @RequestBody CreateProductRequest createRequest) {
-		return service.createProduct(createRequest);
+	public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest createRequest) {
+		final ProductResponse newProduct = service.createProduct(createRequest);
+		return ResponseEntity
+				.created(URI.create(String.format("%s/%s",  //$NON-NLS-1$
+						Constants.PRODUCTS_PATH, newProduct.getExternalId())))
+				.body(newProduct);
 	}
 }
