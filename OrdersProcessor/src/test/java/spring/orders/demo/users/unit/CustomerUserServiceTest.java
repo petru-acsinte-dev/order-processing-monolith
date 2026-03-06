@@ -56,7 +56,6 @@ public class CustomerUserServiceTest {
 	private static final String BOBBY = "bobby"; //$NON-NLS-1$
 	private static final String BOBBY_EMAIL = "bobby@dev.com"; //$NON-NLS-1$
 	private static final String BAD_PSWD = "1234"; //$NON-NLS-1$
-	private static final String UUID0 = "00000000-0000-0000-0000-000000000000"; //$NON-NLS-1$
 	private static final String ACTIVE = "ACTIVE"; //$NON-NLS-1$
 
 	@Mock
@@ -136,6 +135,17 @@ public class CustomerUserServiceTest {
 		service.deleteUser(Constants.ADMIN, newUser.getExternalId());
 
 		verify(userRepository).save(any(CustomerUser.class));
+	}
+
+	@Test
+	@DisplayName("Tests deleting the admin user")
+	void testAdminAsAdmin() {
+		final CustomerUser adminUser = getAdminUser();
+		given(userRepository.findByUsername(Constants.ADMIN))
+    		.willReturn(Optional.of(adminUser));
+
+		assertThrows(UnauthorizedOperationException.class,
+				()-> service.deleteUser(Constants.ADMIN, Constants.ADMIN_UUID0));
 	}
 
 	@Test
@@ -265,7 +275,7 @@ public class CustomerUserServiceTest {
 		admin.setId(0L);
 		admin.setUsername(Constants.ADMIN);
 		admin.setEmail("admin@order.processing.com"); //$NON-NLS-1$
-		admin.setExternalId(UUID.fromString(UUID0));
+		admin.setExternalId(Constants.ADMIN_UUID0);
 		admin.setCreated(LocalDateTime.now());
 		admin.setRole(new Role((short) 0, UserRole.ADMIN));
 		admin.setStatus(new Status((short) 0, ACTIVE));

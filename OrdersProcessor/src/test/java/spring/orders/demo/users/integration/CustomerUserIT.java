@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import spring.orders.demo.constants.Constants;
+import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.shared.AbstractIntegrationTestBase;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CustomerUserResponse;
@@ -65,7 +66,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
-				.andExpect(jsonPath("$.length()").value(expectedUsers(1))) //$NON-NLS-1$
+				.andExpect(jsonPath("$.length()").value(expectedUsersForThisTest(1))) //$NON-NLS-1$
 				.andExpect(jsonPath("$[0].username").value(Constants.ADMIN)) //$NON-NLS-1$
 				.andReturn();
 		if (log.isDebugEnabled()) {
@@ -79,14 +80,14 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	void createUsers() throws Exception {
 		createAndValidateUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
-		getAllUsers(expectedUsers(2));
+		getAllUsers(expectedUsersForThisTest(2));
 
 		createAndValidateUser(secondUsername, secondEmail, firstPassword, secondAddressLine1);
 		// getting both users (+ ADMIN)
-		getAllUsers(expectedUsers(3));
+		getAllUsers(expectedUsersForThisTest(3));
 	}
 
-	private int expectedUsers(int expectedByTest) {
+	private int expectedUsersForThisTest(int expectedByTest) {
 		return expectedByTest + EXPECTED_SAMPLE_DATA_USERS;
 	}
 
@@ -96,7 +97,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	void updateUsers() throws Exception {
 		final CustomerUserResponse newUser = createAndValidateUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting user (+ ADMIN)
-		getAllUsers(expectedUsers(2));
+		getAllUsers(expectedUsersForThisTest(2));
 
 		final var updateRequest = new UpdateCustomerUserRequest();
 		updateRequest.setEmail(newEmail);
@@ -120,7 +121,7 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		}
 
 		// getting user (+ ADMIN)
-		getAllUsers(expectedUsers(2));
+		getAllUsers(expectedUsersForThisTest(2));
 	}
 
 	@Test
@@ -129,23 +130,20 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	void deleteUsers() throws Exception {
 		final CustomerUserResponse firstUser = createAndValidateUser(firstUsername, firstEmail, firstPassword, firstAddressLine1);
 		// getting user (+ ADMIN)
-		getAllUsers(expectedUsers(2));
+		getAllUsers(expectedUsersForThisTest(2));
 
 		createAndValidateUser(secondUsername, secondEmail, secondPassword, secondAddressLine1);
 		// getting users (+ ADMIN)
-		getAllUsers(expectedUsers(3));
+		getAllUsers(expectedUsersForThisTest(3));
 
-		final MvcResult result = mockMvc.perform(delete(Constants.USERS_PATH)
+		mockMvc.perform(delete(Constants.USERS_PATH)
 						.param(Constants.PARAM_EXTERNAL_ID, firstUser.getExternalId())
 						.header(HttpHeaders.AUTHORIZATION, getBearer()))
 				.andExpect(status().isNoContent())
 				.andReturn();
-		if (log.isDebugEnabled()) {
-			log.debug(result.getResponse().getContentAsString());
-		}
 
 		// getting user (+ ADMIN)
-		final List<CustomerUserResponse> allUsers = getAllUsers(expectedUsers(3));
+		final List<CustomerUserResponse> allUsers = getAllUsers(expectedUsersForThisTest(3));
 		boolean found = false;
 		for (final CustomerUserResponse user : allUsers) {
 			if (user.getExternalId().equals(firstUser.getExternalId())) {
@@ -158,6 +156,30 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 			}
 		}
 		assertTrue("Deleted user not found", found); //$NON-NLS-1$
+	}
+
+	@Test
+	@DisplayName("Tests deleting admin user")
+	@Rollback
+	void deleteAdmin() throws Exception {
+		mockMvc.perform(delete(Constants.USERS_PATH)
+						.param(Constants.PARAM_EXTERNAL_ID, Constants.ADMIN_UUID0.toString())
+						.header(HttpHeaders.AUTHORIZATION, getBearer()))
+				.andExpect(status().isForbidden());
+
+		final List<CustomerUserResponse> allUsers = getAllUsers(expectedUsersForThisTest(1));
+		boolean active = false;
+		for (final CustomerUserResponse user : allUsers) {
+			if (Constants.ADMIN_UUID0.toString().equals(user.getExternalId())) {
+				assertEquals(Constants.ADMIN, user.getUsername(),
+						String.format("User %s does not match expected username", user.getExternalId())); //$NON-NLS-1$
+				assertEquals(UserStatus.ACTIVE, user.getStatus(),
+						String.format("User %s does not match expected status", user.getExternalId())); //$NON-NLS-1$
+				active = true;
+				break;
+			}
+		}
+		assertTrue("Deleted user not found", active); //$NON-NLS-1$
 	}
 
 	@Override

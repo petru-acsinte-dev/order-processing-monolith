@@ -99,3 +99,7 @@ OrderProcessor - Daily journal
 - moving class in shared package
 - improved test setup performance by replacing heavy db construction before/after with a single FlyWay migration and using @Rollback in tests
 - various fixes for missed Java Doc, annotations etc.
+
+2026-03-06
+-
+- preventing the admin user from being deleted

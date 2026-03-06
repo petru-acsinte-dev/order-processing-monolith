@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
@@ -172,6 +173,11 @@ public class CustomerUserService {
 	@Transactional
 	public void deleteUser(String requestorIdentifier, UUID externalId) {
 		checkIfAdmin(requestorIdentifier);
+
+		if (Constants.ADMIN_UUID0.equals(externalId)) {
+			log.info("Admin user cannot be deleted by {}", requestorIdentifier); //$NON-NLS-1$
+			throw new UnauthorizedOperationException();
+		}
 
 		log.debug("deleteUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
 		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
