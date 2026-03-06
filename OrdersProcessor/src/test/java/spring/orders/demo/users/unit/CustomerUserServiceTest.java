@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,15 +13,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -32,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.constants.UserStatus;
+import spring.orders.demo.shared.AbstractUnitTestBase;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
@@ -47,9 +43,7 @@ import spring.orders.demo.users.repositories.CustomerUserRepository;
 import spring.orders.demo.users.repositories.StatusRepository;
 import spring.orders.demo.users.services.CustomerUserService;
 
-@Tag("unit")
-@ExtendWith(MockitoExtension.class)
-public class CustomerUserServiceTest {
+public class CustomerUserServiceTest extends AbstractUnitTestBase {
 
 	private static final String DAN = "dan"; //$NON-NLS-1$
 	private static final String DAN_EMAIL = "dan@dev.com"; //$NON-NLS-1$
@@ -81,15 +75,12 @@ public class CustomerUserServiceTest {
 	void testFindAllUsers() {
 		final CustomerUser admin = getAdminUser();
 
-		given(userRepository.findByUsername(Constants.ADMIN))
-			.willReturn(Optional.of(admin));
-
 		given(userRepository.findAll(Pageable.unpaged(Sort.by("username")))) //$NON-NLS-1$
 			.willReturn(new PageImpl<>(List.of(admin)));
 
 		mockResponse(admin);
 
-		final List<CustomerUserResponse> all = service.findAllUsers(Constants.ADMIN);
+		final List<CustomerUserResponse> all = service.findAllUsers();
 
 		assertThat(all).size().isEqualTo(1);
 		assertThat(all.get(0).getUsername()).isEqualTo(Constants.ADMIN);
@@ -98,33 +89,36 @@ public class CustomerUserServiceTest {
 	@Test
 	@DisplayName("Tests that the admin can create a regular user")
 	void testCreateUserAsAdmin() {
-		createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
+		createUser(BOBBY, BOBBY_EMAIL, BAD_PSWD);
 	}
 
 	@Test
 	@DisplayName("Tests that a non-admin user cannot create a regular user")
 	void testCreateUserAsNonAdmin() {
-		createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
+		createUser(BOBBY, BOBBY_EMAIL, BAD_PSWD);
+
+		setupUserNoRole(BOBBY, BAD_PSWD);
 
 		assertThrows(UnauthorizedOperationException.class,
-				() -> createAs(BOBBY, DAN, DAN_EMAIL, BAD_PSWD));
+				() -> createUser(DAN, DAN_EMAIL, BAD_PSWD));
 	}
 
 	@Test
 	@DisplayName("Tests updating the email + address for an existing user")
 	void testUpdateUserAsAdmin() {
-		final CustomerUser newUser = createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
+		final CustomerUser newUser = createUser(BOBBY, BOBBY_EMAIL, BAD_PSWD);
 
-		updateAs(Constants.ADMIN, newUser, "newbobby@dev.com", new AddressDTO("LA LA"), BAD_PSWD);  //$NON-NLS-1$//$NON-NLS-2$
+		final UUID userExternalId = newUser.getExternalId();
+		given(userRepository.findByExternalId(userExternalId))
+        	.willReturn(Optional.of(newUser));
+
+		updateUser(newUser, "newbobby@dev.com", new AddressDTO("LA LA"), BAD_PSWD);  //$NON-NLS-1$//$NON-NLS-2$
 	}
 
 	@Test
 	@DisplayName("Tests deleting an existing user")
 	void testDeleteUserAsAdmin() {
-		final CustomerUser newUser = createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
-
-		given(userRepository.findByUsername(Constants.ADMIN))
-    		.willReturn(Optional.of(getAdminUser()));
+		final CustomerUser newUser = createUser(BOBBY, BOBBY_EMAIL, BAD_PSWD);
 
 		given(userRepository.findByExternalId(newUser.getExternalId()))
 			.willReturn(Optional.of(newUser));
@@ -132,7 +126,7 @@ public class CustomerUserServiceTest {
 		given(statusRepository.findByStatus(UserStatus.ARCHIVED))
 			.willReturn(Optional.of(new Status(UserStatus.ARCHIVED_ID, UserStatus.ARCHIVED)));
 
-		service.deleteUser(Constants.ADMIN, newUser.getExternalId());
+		service.deleteUser(newUser.getExternalId());
 
 		verify(userRepository).save(any(CustomerUser.class));
 	}
@@ -140,47 +134,36 @@ public class CustomerUserServiceTest {
 	@Test
 	@DisplayName("Tests deleting the admin user")
 	void testAdminAsAdmin() {
-		final CustomerUser adminUser = getAdminUser();
-		given(userRepository.findByUsername(Constants.ADMIN))
-    		.willReturn(Optional.of(adminUser));
-
 		assertThrows(UnauthorizedOperationException.class,
-				()-> service.deleteUser(Constants.ADMIN, Constants.ADMIN_UUID0));
+				()-> service.deleteUser(Constants.ADMIN_UUID0));
 	}
 
 	@Test
 	@DisplayName("Tests that updating as non-admin not possible")
 	void testUpdateUserAsNonAdmin() {
-		final CustomerUser newUser = createAs(Constants.ADMIN, BOBBY, BOBBY_EMAIL, BAD_PSWD);
-
+		final CustomerUser newUser = createUser(BOBBY, BOBBY_EMAIL, BAD_PSWD);
 		final AddressDTO newAddress = new AddressDTO("LA LA"); //$NON-NLS-1$
+
+		setupUserNoRole(BOBBY, BAD_PSWD);
+
 		assertThrows(UnauthorizedOperationException.class,
-				() -> updateAs(BOBBY, newUser, "newbobby@dev.com", newAddress, BAD_PSWD));  //$NON-NLS-1$
+				() -> updateUser(newUser, "newbobby@dev.com", newAddress, BAD_PSWD));  //$NON-NLS-1$
 	}
 
-	private void updateAs(String requestorIdentifier, CustomerUser existingUser,
+	private void updateUser(CustomerUser existingUser,
 						String email, AddressDTO address, String newPassword) {
 		final UpdateCustomerUserRequest updateRequest = new UpdateCustomerUserRequest();
 		updateRequest.setEmail(email);
 		updateRequest.setAddress(address);
 		updateRequest.setPassword(passwordEncoder.encode(newPassword));
 
-		final CustomerUser adminUser = getAdminUser();
-
-		given(userRepository.findByUsername(requestorIdentifier))
-        	.willAnswer(invocation -> (Constants.ADMIN.equals(requestorIdentifier) ? Optional.of(adminUser) : Optional.of(existingUser)));
-
-		// this is necessary to avoid UserNotFoundException
-		lenient().when(userRepository.findByExternalId(existingUser.getExternalId()))
-			.thenReturn(Optional.of(existingUser));
-
-		service.updateUser(requestorIdentifier, existingUser.getExternalId(), updateRequest);
+		service.updateUser(existingUser.getExternalId(), updateRequest);
 
 		verify(userRepository).save(any(CustomerUser.class));
 
 	}
 
-	private CustomerUser createAs(String requestorIdentifier, String newUsername, String newEmail, String newPassword) {
+	private CustomerUser createUser(String newUsername, String newEmail, String newPassword) {
 		final var createRequest = new CreateCustomerUserRequest();
 		createRequest.setUsername(newUsername);
 		createRequest.setEmail(newEmail);
@@ -207,13 +190,7 @@ public class CustomerUserServiceTest {
             final Role role = new Role(UserRole.USER_ID, UserRole.USER);
             newUser.setRole(role);
 
-            given(userRepository.findByUsername(ArgumentMatchers.anyString()))
-	            .willAnswer(invocation -> {
-	                final String username = invocation.getArgument(0);
-	                return username.equals(Constants.ADMIN) ? Optional.of(adminUser) : Optional.of(newUser);
-	            });
-
-            service.createUser(requestorIdentifier, createRequest);
+            service.createUser(createRequest);
 
             verify(userRepository).save(any(CustomerUser.class));
 

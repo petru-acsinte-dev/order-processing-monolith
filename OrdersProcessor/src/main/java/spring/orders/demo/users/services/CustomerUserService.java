@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.constants.UserStatus;
+import spring.orders.demo.security.SecurityUtils;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
@@ -59,21 +60,13 @@ public class CustomerUserService {
 		this.passwordEncoder = passwordEncoder;
 	}
 
-	private CustomerUser getUserByPiiIdentifier(String piiIdentifier) {
-		return userRepository.findByUsername(piiIdentifier)
-				.or(() -> userRepository.findByEmail(piiIdentifier))
-				.orElseThrow(UserNotFoundException::new);
-	}
-
 	/**
 	 * Returns the existing users. Requires admin role.
-	 * @param requestorIdentifier PII identifier for the requestor (username <- recommended or email)
 	 * @return A collection of existing users ordered by username.
 	 */
 	@Transactional (readOnly = true)
-	public List<CustomerUserResponse> findAllUsers(String requestorIdentifier) {
-		log.debug("findAllUsers(): Identifying the requestor"); //$NON-NLS-1$
-		checkIfAdmin(requestorIdentifier);
+	public List<CustomerUserResponse> findAllUsers() {
+		SecurityUtils.confirmAdminRole();
 
 		log.debug("Listing all users (admin)"); //$NON-NLS-1$
 		// FIXME: unpaged for now
@@ -81,24 +74,15 @@ public class CustomerUserService {
 		return users.stream().map(userMapper::toResponse).toList();
 	}
 
-	private void checkIfAdmin(String requestorIdentifier) {
-		final CustomerUser requestor = getUserByPiiIdentifier(requestorIdentifier);
-		if ( ! UserRole.ADMIN.equals(requestor.getRole().getRole())) {
-			log.warn("Forbidden: User {} is not an admin user", requestor.getId()); //$NON-NLS-1$
-			throw new UnauthorizedOperationException();
-		}
-	}
-
 	/**
 	 * Creates a new user. Requires admin role.
-	 * @param requestorIdentifier PII identifier for the admin user making the request (username <- recommended or email)
 	 * @param createRequest New users details wrapped in {@link CreateCustomerUserRequest}
 	 * @return The newly created user information.
 	 */
 	@Transactional
-	public CustomerUserResponse createUser(String requestorIdentifier, CreateCustomerUserRequest createRequest) {
+	public CustomerUserResponse createUser(CreateCustomerUserRequest createRequest) {
 		log.debug("Creating new user..."); //$NON-NLS-1$
-		checkIfAdmin(requestorIdentifier);
+		SecurityUtils.confirmAdminRole();
 
 		final CustomerUser partialEntity = userMapper.fromCreateRequest(createRequest);
 
@@ -133,12 +117,11 @@ public class CustomerUserService {
 
 	/**
 	 * Updates the user email and/or address for an existing user. Requires admin role.
-	 * @param requestorIdentifier PII identifier for an admin user making the request (username <- recommended or email)
 	 * @param externalId External identifier of user to be updated (UUID)
 	 */
 	@Transactional
-	public CustomerUserResponse updateUser(String requestorIdentifier, UUID externalId, UpdateCustomerUserRequest userUpdateRequest) {
-		checkIfAdmin(requestorIdentifier);
+	public CustomerUserResponse updateUser(UUID externalId, UpdateCustomerUserRequest userUpdateRequest) {
+		SecurityUtils.confirmAdminRole();
 
 		log.debug("updateUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
 		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
@@ -167,15 +150,14 @@ public class CustomerUserService {
 	/**
 	 * Marks the user as deleted. The user is not completely removed from the database because past orders might reference it.
 	 * Requires admin role.
-	 * @param requestorIdentifier PII identifier for an admin user making the request (username <- recommended or email)
 	 * @param externalId External identifier of user to be deleted (UUID)
 	 */
 	@Transactional
-	public void deleteUser(String requestorIdentifier, UUID externalId) {
-		checkIfAdmin(requestorIdentifier);
+	public void deleteUser(UUID externalId) {
+		SecurityUtils.confirmAdminRole();
 
 		if (Constants.ADMIN_UUID0.equals(externalId)) {
-			log.info("Admin user cannot be deleted by {}", requestorIdentifier); //$NON-NLS-1$
+			log.info("Admin user cannot be deleted"); //$NON-NLS-1$
 			throw new UnauthorizedOperationException();
 		}
 

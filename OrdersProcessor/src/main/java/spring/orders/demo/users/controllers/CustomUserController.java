@@ -6,8 +6,6 @@ import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -56,8 +54,7 @@ public class CustomUserController {
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
 	public List<CustomerUserResponse> findAll() {
-		final String requestorIdentifier = getUsername();
-		return service.findAllUsers(requestorIdentifier);
+		return service.findAllUsers();
 	}
 
 	@PostMapping
@@ -75,8 +72,7 @@ public class CustomUserController {
 				content = @Content(schema = @Schema(hidden = true)))
 	public ResponseEntity<CustomerUserResponse> createUser(
 			@Valid @RequestBody CreateCustomerUserRequest createRequest) {
-		final String requestorIdentifier = getUsername();
-		final CustomerUserResponse newUser = service.createUser(requestorIdentifier, createRequest);
+		final CustomerUserResponse newUser = service.createUser(createRequest);
 		return ResponseEntity
 			.created(URI.create("/users/" + newUser.getExternalId())) //$NON-NLS-1$
 			.body(newUser);
@@ -99,9 +95,8 @@ public class CustomUserController {
 	public ResponseEntity<CustomerUserResponse> updateUser(
 			@RequestParam (required = true) String externalId,
 			@Valid @RequestBody UpdateCustomerUserRequest updateRequest) {
-		final String requestorIdentifier = getUsername();
 		final UUID external = UUID.fromString(externalId);
-		final CustomerUserResponse updatedUser = service.updateUser(requestorIdentifier, external, updateRequest);
+		final CustomerUserResponse updatedUser = service.updateUser(external, updateRequest);
 		return ResponseEntity
 			.ok(updatedUser);
 	}
@@ -122,16 +117,10 @@ public class CustomUserController {
 	public ResponseEntity<CustomerUserResponse> deleteUser(
 			@RequestParam (required = true) String externalId) {
 		final UUID external = UUID.fromString(externalId);
-		final String requestorIdentifier = getUsername();
-		service.deleteUser(requestorIdentifier, external);
+		service.deleteUser(external);
 		return ResponseEntity
 			.noContent()
 			.build();
-	}
-
-	private static String getUsername() {
-		final UserDetails details = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		return details.getUsername();
 	}
 
 }

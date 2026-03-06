@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -29,9 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.products.dto.CreateProductRequest;
@@ -43,10 +38,11 @@ import spring.orders.demo.products.entities.Product;
 import spring.orders.demo.products.mappers.ProductMapper;
 import spring.orders.demo.products.repositories.ProductRepository;
 import spring.orders.demo.products.services.ProductService;
+import spring.orders.demo.shared.AbstractUnitTestBase;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
-class ProductServiceTest {
+class ProductServiceTest extends AbstractUnitTestBase {
 
 	private static final String CAD = "CAD"; //$NON-NLS-1$
 
@@ -58,18 +54,6 @@ class ProductServiceTest {
 
 	@InjectMocks
 	private ProductService service;
-
-	@BeforeEach
-	void setupAuth() {
-		SecurityContextHolder.getContext().setAuthentication(
-				new UsernamePasswordAuthenticationToken(
-						Constants.ADMIN, Constants.ADMIN, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))); //$NON-NLS-1$
-	}
-
-	@AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
 
 	@Test
 	@DisplayName("Retrieves products from the system")
@@ -150,8 +134,7 @@ class ProductServiceTest {
 	@Test
 	@DisplayName("Tests that creating a product as non-admin not possible")
 	void testCreateProductAsRegularUser() {
-		SecurityContextHolder.getContext().setAuthentication(
-				new UsernamePasswordAuthenticationToken(Constants.ADMIN, Constants.ADMIN));
+		setupUserNoRole(Constants.ADMIN, Constants.ADMIN);
 
 		assertThrows(Exception.class, this::doCreateProduct);
 	}
@@ -168,8 +151,7 @@ class ProductServiceTest {
 	void testUpdateProductAsRegularUser() {
 		final ProductResponse response = doCreateProduct();
 
-		SecurityContextHolder.getContext().setAuthentication(
-				new UsernamePasswordAuthenticationToken(Constants.ADMIN, Constants.ADMIN));
+		setupUserNoRole(Constants.ADMIN, Constants.ADMIN);
 
 		assertThrows(Exception.class, ()->doUpdateProduct(response));
 	}
@@ -186,8 +168,7 @@ class ProductServiceTest {
 	void testDeleteProductAsRegularUser() {
 		final ProductResponse response = doCreateProduct();
 
-		SecurityContextHolder.getContext().setAuthentication(
-				new UsernamePasswordAuthenticationToken(Constants.ADMIN, Constants.ADMIN));
+		setupUserNoRole(Constants.ADMIN, Constants.ADMIN);
 
 		assertThrows(Exception.class, ()->doDeleteProduct(response));
 	}

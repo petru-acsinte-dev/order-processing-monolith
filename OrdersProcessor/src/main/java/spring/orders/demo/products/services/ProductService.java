@@ -9,7 +9,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.products.dto.CreateProductRequest;
 import spring.orders.demo.products.dto.ProductResponse;
@@ -19,7 +18,6 @@ import spring.orders.demo.products.exceptions.ProductNotFoundException;
 import spring.orders.demo.products.mappers.ProductMapper;
 import spring.orders.demo.products.repositories.ProductRepository;
 import spring.orders.demo.security.SecurityUtils;
-import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 
 @Service
 public class ProductService {
@@ -60,7 +58,7 @@ public class ProductService {
 	 */
 	@Transactional
 	public ProductResponse createProduct(CreateProductRequest createRequest) {
-		checkIfAdmin();
+		SecurityUtils.confirmAdminRole();
 
 		final Product newProduct = mapper.toEntity(createRequest);
 		newProduct.setActive(true);
@@ -77,7 +75,7 @@ public class ProductService {
 	 */
 	@Transactional
 	public ProductResponse updateProduct(UUID externalId, UpdateProductRequest updateRequest) {
-		checkIfAdmin();
+		SecurityUtils.confirmAdminRole();
 
 		log.debug("Finding product identified by {}", externalId); //$NON-NLS-1$
 		final Product product = repository.findByExternalId(externalId)
@@ -102,7 +100,7 @@ public class ProductService {
 	 */
 	@Transactional
 	public ProductResponse deleteProduct(UUID externalId) {
-		checkIfAdmin();
+		SecurityUtils.confirmAdminRole();
 
 		log.debug("Finding product identified by {}", externalId); //$NON-NLS-1$
 		final Product product = repository.findByExternalId(externalId)
@@ -111,11 +109,4 @@ public class ProductService {
 		return mapper.toResponse(product);
 	}
 
-	private void checkIfAdmin() {
-		if (SecurityUtils.hasRole(Constants.ADMIN_ROLE)) {
-			return;
-		}
-		log.warn("Forbidden: User {} is not an admin user", SecurityUtils.getUsername()); //$NON-NLS-1$
-		throw new UnauthorizedOperationException();
-	}
 }

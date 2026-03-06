@@ -103,3 +103,5 @@ OrderProcessor - Daily journal
 2026-03-06
 -
 - preventing the admin user from being deleted
+- removing temporary requestor parameter from customer user service (using JWT security instead)
+- 
