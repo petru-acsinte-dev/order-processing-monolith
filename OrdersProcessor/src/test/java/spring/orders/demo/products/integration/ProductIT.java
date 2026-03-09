@@ -48,12 +48,15 @@ class ProductIT extends AbstractIntegrationTestBase{
 	private static final String FIELD_DESC = "description"; //$NON-NLS-1$
 	private static final Object FIELD_CURRENCY = "currency"; //$NON-NLS-1$
 	private static final String FIELD_EXTERNAL_ID = "externalId"; //$NON-NLS-1$
+	private static final String CONTENT_ATTR = "content"; //$NON-NLS-1$
 	private static final String ARRAY_MEMBR_TMPLT = "$[%d].%s"; //$NON-NLS-1$
 	private static final String ARRAY_MEMBR_COST_TMPLT = "$[%d].cost.%s"; //$NON-NLS-1$
+	private static final String CNT_ARRAY_MEMBR_TMPLT = "$.%s[%d].%s"; //$NON-NLS-1$
+	private static final String CNT_ARRAY_MEMBR_COST_TMPLT = "$.%s[%d].cost.%s"; //$NON-NLS-1$
 	private static final String MEMBR_COST_TMPLT = "$.cost.%s"; //$NON-NLS-1$
 	private static final String MEMBR_TMPLT = "$.%s"; //$NON-NLS-1$
 	private static final Logger log = LoggerFactory.getLogger(ProductIT.class);
-	private static final int EXPECTED_NO = 120; // expected predefined products
+	private static final int PAGE_SIZE = 50; // expected predefined products
 	private static final String ISO_4217_REGEX = "^[A-Z]{3}$"; //$NON-NLS-1$
 
 	@Override
@@ -242,23 +245,32 @@ class ProductIT extends AbstractIntegrationTestBase{
 	}
 
 	private void doGetAllProducts() throws Exception {
-		final int randomSelection = new Random().nextInt(110);
+		final int randomSelection = new Random().nextInt(PAGE_SIZE);
 		final MvcResult result = mockMvc
 				.perform(get(Constants.PRODUCTS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
-						.header(HttpHeaders.AUTHORIZATION, getBearer()))
+						.header(HttpHeaders.AUTHORIZATION, getBearer())
+						.param("size", String.valueOf(PAGE_SIZE))) //$NON-NLS-1$
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
-				.andExpect(jsonPath("$.length()").value(EXPECTED_NO)) //$NON-NLS-1$
-				.andExpect(jsonPath(ARRAY_MEMBR_TMPLT, randomSelection, FIELD_EXTERNAL_ID).isNotEmpty())
-				.andExpect(jsonPath(ARRAY_MEMBR_TMPLT, randomSelection, FIELD_EXTERNAL_ID).value(matchesPattern(UUID_REGEX)))
-				.andExpect(jsonPath(ARRAY_MEMBR_TMPLT, randomSelection, FIELD_NAME).isNotEmpty())
-				.andExpect(jsonPath(ARRAY_MEMBR_TMPLT, randomSelection, FIELD_SKU).isNotEmpty())
-				.andExpect(jsonPath(ARRAY_MEMBR_COST_TMPLT, randomSelection, FIELD_AMOUNT).isNumber())
-				.andExpect(jsonPath(ARRAY_MEMBR_COST_TMPLT, randomSelection, FIELD_AMOUNT).value(Matchers.greaterThanOrEqualTo(0.0D)))
-				.andExpect(jsonPath(ARRAY_MEMBR_COST_TMPLT, randomSelection, FIELD_CURRENCY).isNotEmpty())
-				.andExpect(jsonPath(ARRAY_MEMBR_COST_TMPLT, randomSelection, FIELD_CURRENCY).value(matchesPattern(ISO_4217_REGEX)))
+				.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR).isArray()) //$NON-NLS-1$
+				.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR + ".length()").value(PAGE_SIZE)) //$NON-NLS-1$ //$NON-NLS-2$
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_EXTERNAL_ID).isNotEmpty())
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_EXTERNAL_ID).value(matchesPattern(UUID_REGEX)))
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_NAME).isNotEmpty())
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_SKU).isNotEmpty())
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_AMOUNT).isNumber())
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_AMOUNT).value(Matchers.greaterThanOrEqualTo(0.0D)))
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_CURRENCY).isNotEmpty())
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, Constants.PAGE_CONTENT_ATTR,
+						randomSelection, FIELD_CURRENCY).value(matchesPattern(ISO_4217_REGEX)))
 				.andReturn();
 		if (log.isDebugEnabled()) {
 			log.debug(result.getResponse().getContentAsString());

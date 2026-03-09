@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserStatus;
@@ -37,6 +38,8 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	private static final int EXPECTED_SAMPLE_DATA_USERS = 20;
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(CustomerUserIT.class);
+
+	private static final int PAGE_SIZE = 100;
 
 	private final String firstUsername = "bobby"; //$NON-NLS-1$
 	private final String firstEmail = "bobby@order.processor.com"; //$NON-NLS-1$
@@ -62,12 +65,15 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 		final MvcResult result = mockMvc
 				.perform(get(Constants.USERS_PATH)
 						.accept(MediaType.APPLICATION_JSON)
-						.header(HttpHeaders.AUTHORIZATION, getBearer()))
+						.header(HttpHeaders.AUTHORIZATION, getBearer())
+						.param("size", String.valueOf(PAGE_SIZE))) //$NON-NLS-1$
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
-				.andExpect(jsonPath("$.length()").value(expectedUsersForThisTest(1))) //$NON-NLS-1$
-				.andExpect(jsonPath("$[0].username").value(Constants.ADMIN)) //$NON-NLS-1$
+				.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR).isArray()) //$NON-NLS-1$
+				.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR + ".length()") //$NON-NLS-1$ //$NON-NLS-2$
+						.value(expectedUsersForThisTest(1)))
+				.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR  //$NON-NLS-1$
+						+ "[0].username").value(Constants.ADMIN)) //$NON-NLS-1$
 				.andReturn();
 		if (log.isDebugEnabled()) {
 			log.debug(result.getResponse().getContentAsString());
@@ -190,17 +196,21 @@ class CustomerUserIT extends AbstractIntegrationTestBase {
 	private List<CustomerUserResponse> getAllUsers(int expectedNumberOfUsers) throws Exception {
 		final MvcResult result = mockMvc.perform(get(Constants.USERS_PATH)
 				.accept(MediaType.APPLICATION_JSON)
-				.header(HttpHeaders.AUTHORIZATION, getBearer()))
+				.header(HttpHeaders.AUTHORIZATION, getBearer())
+				.param("size", String.valueOf(PAGE_SIZE))) //$NON-NLS-1$
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-			.andExpect(jsonPath("$").isArray()) //$NON-NLS-1$
-			.andExpect(jsonPath("$.length()").value(expectedNumberOfUsers)) //$NON-NLS-1$
+			.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR).isArray()) //$NON-NLS-1$
+			.andExpect(jsonPath(String.format("$.%s.length()",  //$NON-NLS-1$
+					Constants.PAGE_CONTENT_ATTR)).value(expectedNumberOfUsers))
 			.andReturn();
 		final String content = result.getResponse().getContentAsString();
 		if (log.isDebugEnabled()) {
 			log.debug(content);
 		}
-		return objectMapper.readValue(content, new TypeReference<List<CustomerUserResponse>>() {});
+		final JsonNode root = objectMapper.readTree(content);
+		final JsonNode contentNode = root.get(Constants.PAGE_CONTENT_ATTR);
+		return objectMapper.convertValue(contentNode, new TypeReference<List<CustomerUserResponse>>() {});
 	}
 
 }

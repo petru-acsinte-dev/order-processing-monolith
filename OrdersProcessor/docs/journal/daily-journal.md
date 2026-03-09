@@ -104,4 +104,13 @@ OrderProcessor - Daily journal
 -
 - preventing the admin user from being deleted
 - removing temporary requestor parameter from customer user service (using JWT security instead)
-- 
+
+2026-03-07
+-
+- introducing paging for listing users
+- ran into problems with @ConfigurationProperties not initializing properly; turns out Eclipse STS warnings around properties in the properties file are red herrings
+
+2026-03-09
+-
+- fixed link templates and sorting url params
+- introducing paging for products

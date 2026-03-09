@@ -1,12 +1,12 @@
 package spring.orders.demo.users.services;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +17,7 @@ import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.security.SecurityUtils;
+import spring.orders.demo.users.UserProps;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
@@ -48,16 +49,20 @@ public class CustomerUserService {
 
 	private final PasswordEncoder passwordEncoder;
 
+	private final UserProps userProps;
+
 	public CustomerUserService(CustomerUserRepository userRepository,
 								StatusRepository statusRepository,
 								CustomerUserMapper userMapper,
 								AddressMapper addressMapper,
-								PasswordEncoder passwordEncoder) {
+								PasswordEncoder passwordEncoder,
+								UserProps userProps) {
 		this.userRepository = userRepository;
 		this.statusRepository = statusRepository;
 		this.userMapper = userMapper;
 		this.addressMapper = addressMapper;
 		this.passwordEncoder = passwordEncoder;
+		this.userProps = userProps;
 	}
 
 	/**
@@ -65,13 +70,14 @@ public class CustomerUserService {
 	 * @return A collection of existing users ordered by username.
 	 */
 	@Transactional (readOnly = true)
-	public List<CustomerUserResponse> findAllUsers() {
+	public Page<CustomerUserResponse> findUsers(Pageable pageable) {
 		SecurityUtils.confirmAdminRole();
 
-		log.debug("Listing all users (admin)"); //$NON-NLS-1$
-		// FIXME: unpaged for now
-		final Page<CustomerUser> users = userRepository.findAll(Pageable.unpaged(Sort.by("username"))); //$NON-NLS-1$
-		return users.stream().map(userMapper::toResponse).toList();
+		final Pageable request = getPagingRequest(pageable);
+
+		log.debug("Listing existing users"); //$NON-NLS-1$
+		final Page<CustomerUser> users = userRepository.findAll(request);
+		return users.map(userMapper::toResponse);
 	}
 
 	/**
@@ -171,4 +177,32 @@ public class CustomerUserService {
 		user.setStatus(archivedStatus);
 		log.info("User {} marked as deleted", user.getId()); //$NON-NLS-1$
 	}
+
+	private Pageable getPagingRequest(Pageable pageable) {
+		int pageNo = 0;
+		int pageSize = userProps.getPageSize();
+		Sort sortBy = null == userProps.getDefaultSortAttribute() ?
+				null : Sort.by(userProps.getDefaultSortAttribute());
+		if (null != pageable) {
+			if (pageable.getPageNumber() > 0) {
+				pageNo = pageable.getPageNumber();
+			}
+			final int requestSize = pageable.getPageSize();
+			if (requestSize > 0
+			&& requestSize <= Constants.PAGE_SIZE_HARD_LIMIT // system imposed limit
+			&& requestSize <= userProps.getMaxPageSize()) {
+				pageSize = requestSize;
+			}
+			if (null == sortBy) {
+				sortBy = pageable.getSort();
+			} else {
+				sortBy = pageable.getSortOr(sortBy);
+			}
+		}
+		if (null == sortBy) {
+			return PageRequest.of(pageNo, pageSize);
+		}
+		return PageRequest.of(pageNo, pageSize, sortBy);
+	}
+
 }

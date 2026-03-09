@@ -1,9 +1,15 @@
 package spring.orders.demo.users.controllers;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,20 +48,27 @@ public class CustomUserController {
 	}
 
 	@GetMapping
-	@Operation (summary = "Lists all users",
-			description = "Lists all users present in the system. Requires admin priviledges.")
+	@Operation (summary = "Lists users",
+			description = "Lists users present in the system. Requires admin priviledges.")
 	@ApiResponse (responseCode = "200",
 				description = "Users retrieved successfully",
-				content = @Content(mediaType = "application/json",
-								array = @ArraySchema(schema = @Schema(implementation = CustomerUserResponse.class))))
+				content = @Content(
+						mediaType = MediaType.APPLICATION_JSON_VALUE,
+						schema = @Schema(implementation = PagedCustomerUserResponse.class)),
+				headers = @Header(
+			            name = "Link",
+			            description = "Pagination links with rel=next and rel=prev",
+			            required = false))
 	@ApiResponse (responseCode = "403",
 				description = "User does not have the required priviledges",
 				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
-	public List<CustomerUserResponse> findAll() {
-		return service.findAllUsers();
+	public ResponseEntity<Page<CustomerUserResponse>> getUsers(@ParameterObject Pageable pageable) {
+		final Page<CustomerUserResponse> page = service.findUsers(pageable);
+
+		return getResponse(page);
 	}
 
 	@PostMapping
@@ -121,6 +135,40 @@ public class CustomUserController {
 		return ResponseEntity
 			.noContent()
 			.build();
+	}
+
+	private static ResponseEntity<Page<CustomerUserResponse>> getResponse(Page<CustomerUserResponse> page) {
+		final Sort sortBy = page.getSort();
+		final String nextLink = (page.hasNext()) ?
+				buildLink(page.getNumber() + 1, page.getSize(), sortBy) : null;
+        final String prevLink = (page.hasPrevious()) ?
+        		buildLink(page.getNumber() - 1, page.getSize(), sortBy) : null;
+
+        final HttpHeaders headers = new HttpHeaders();
+        if (null != nextLink) {
+        	headers.add(Constants.LINK_RESPONSE_HEADER,
+        		String.format(Constants.LINK_NEXT_TEMPLATE, nextLink));
+        }
+        if (null != prevLink) {
+        	headers.add(Constants.LINK_RESPONSE_HEADER,
+        		String.format(Constants.LINK_PREV_TEMPLATE, prevLink));
+        }
+        return new ResponseEntity<>(page, headers, HttpStatus.OK);
+	}
+
+	private static String buildLink(int pageNo, int pageSize, Sort sortBy) {
+		if (null == sortBy) {
+			return String.format(Constants.PAGE_LINK_TEMPLATE, Constants.USERS_PATH, pageNo, pageSize);
+		}
+		return String.format(Constants.PAGE_LINK_SORT_TEMPLATE, Constants.USERS_PATH, pageNo, pageSize, getSortParams(sortBy));
+	}
+
+	private static String getSortParams(Sort sortBy) {
+		return sortBy.stream()
+				.map(f -> String.format("&sort=%s,%s",  //$NON-NLS-1$
+										f.getProperty(),
+										f.getDirection().name().toLowerCase()))
+				.collect(Collectors.joining());
 	}
 
 }

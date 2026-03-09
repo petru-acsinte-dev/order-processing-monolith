@@ -1,9 +1,10 @@
 package spring.orders.demo.products.controllers;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -53,8 +54,8 @@ public class ProductController {
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
 	@GetMapping
-	public List<ProductResponse> getAvailableProducts() {
-		return service.getAllProducts();
+	public Page<ProductResponse> getAvailableProducts(Pageable pageable) {
+		return service.getProducts(pageable);
 	}
 
 	@Operation (summary = "Updates a product",

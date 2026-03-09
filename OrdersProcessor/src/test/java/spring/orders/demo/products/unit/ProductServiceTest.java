@@ -24,11 +24,14 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import spring.orders.demo.constants.Constants;
+import spring.orders.demo.orders.OrderProps;
 import spring.orders.demo.products.dto.CreateProductRequest;
 import spring.orders.demo.products.dto.MoneyDTO;
 import spring.orders.demo.products.dto.ProductResponse;
@@ -51,6 +54,10 @@ class ProductServiceTest extends AbstractUnitTestBase {
 
 	@Mock
 	private ProductMapper mapper;
+
+	@Mock
+	private OrderProps orderProps;
+
 
 	@InjectMocks
 	private ProductService service;
@@ -84,8 +91,14 @@ class ProductServiceTest extends AbstractUnitTestBase {
 
 		final List<Product> expectedProducts = List.of(first, second, third);
 
-		given(repository.findAll(Pageable.unpaged(Sort.by("name")))) //$NON-NLS-1$
-			.willReturn(new PageImpl<>(expectedProducts));
+		final String attribute = "name"; //$NON-NLS-1$
+		final Pageable request = PageRequest.of(1, 100, Sort.by(attribute));
+
+		lenient().when(repository.findAll(any(Pageable.class)))
+			.thenReturn(new PageImpl<>(expectedProducts));
+
+		lenient().when(repository.findByActiveTrue(any(Pageable.class)))
+			.thenReturn(new PageImpl<>(expectedProducts));
 
 		given(mapper.toResponse(first))
 			.willReturn(new ProductResponse(first.getExternalId().toString(),
@@ -111,12 +124,19 @@ class ProductServiceTest extends AbstractUnitTestBase {
 											true,
 											new MoneyDTO(third.getCost().getAmount(), third.getCost().getCurrency())));
 
-		final List<ProductResponse> products = service.getAllProducts();
-		assertNotNull(products);
-		assertEquals(3, products.size());
+		given(orderProps.getPageSize())
+			.willReturn(50);
+		given(orderProps.getMaxPageSize())
+			.willReturn(50);
+		given(orderProps.getDefaultSortAttribute())
+			.willReturn(attribute);
+
+		final Page<ProductResponse> prodPage = service.getProducts(request);
+		assertNotNull(prodPage);
+		assertEquals(3, prodPage.getContent().size());
 		for (int index = 0; index < 3; index++) {
 			final var expected = expectedProducts.get(index);
-			final var actual = products.get(index);
+			final var actual = prodPage.getContent().get(index);
 			assertEquals(expected.getExternalId().toString(), actual.getExternalId());
 			assertEquals(expected.getName(), actual.getName());
 			assertEquals(expected.getCost().getAmount(), actual.getCost().getAmount());

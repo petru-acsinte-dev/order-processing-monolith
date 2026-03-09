@@ -1,15 +1,18 @@
 package spring.orders.demo.products.services;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
+import spring.orders.demo.orders.OrderProps;
 import spring.orders.demo.products.dto.CreateProductRequest;
 import spring.orders.demo.products.dto.ProductResponse;
 import spring.orders.demo.products.dto.UpdateProductRequest;
@@ -28,9 +31,12 @@ public class ProductService {
 
 	private final ProductMapper mapper;
 
-	public ProductService(ProductRepository repository, ProductMapper mapper) {
+	private final OrderProps orderProps;
+
+	public ProductService(ProductRepository repository, ProductMapper mapper, OrderProps orderProps) {
 		this.repository = repository;
 		this.mapper = mapper;
+		this.orderProps = orderProps;
 	}
 
 
@@ -40,15 +46,19 @@ public class ProductService {
 	 * @return A collection of {@link ProductResponse} representing the products.
 	 */
 	@Transactional(readOnly = true)
-	public List<ProductResponse> getAllProducts() {
+	public Page<ProductResponse> getProducts(Pageable pageable) {
 
 		final boolean filterInactive = ! SecurityUtils.hasRole(UserRole.ADMIN);
-		// FIXME: Unpaged for now
-		return repository.findAll(Pageable.unpaged(Sort.by("name"))) //$NON-NLS-1$
-			.stream()
-			.filter(product -> (!filterInactive || product.isActive()))
-			.map(mapper::toResponse)
-			.toList();
+
+		final Pageable pageRequest = getPagingRequest(pageable);
+
+		log.debug("Finding {} products", filterInactive ? "active" : "all");   //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+		if (filterInactive) {
+			return repository.findByActiveTrue(pageRequest)
+					.map(mapper::toResponse);
+		}
+		return repository.findAll(pageRequest)
+			.map(mapper::toResponse);
 	}
 
 	/**
@@ -109,4 +119,30 @@ public class ProductService {
 		return mapper.toResponse(product);
 	}
 
+	private Pageable getPagingRequest(Pageable pageable) {
+		int pageNo = 0;
+		int pageSize = orderProps.getPageSize();
+		Sort sortBy = null == orderProps.getDefaultSortAttribute() ?
+				null : Sort.by(orderProps.getDefaultSortAttribute());
+		if (null != pageable) {
+			if (pageable.getPageNumber() > 0) {
+				pageNo = pageable.getPageNumber();
+			}
+			final int requestSize = pageable.getPageSize();
+			if (requestSize > 0
+			&& requestSize <= Constants.PAGE_SIZE_HARD_LIMIT // system imposed limit
+			&& requestSize <= orderProps.getMaxPageSize()) {
+				pageSize = requestSize;
+			}
+			if (null == sortBy) {
+				sortBy = pageable.getSort();
+			} else {
+				sortBy = pageable.getSortOr(sortBy);
+			}
+		}
+		if (null == sortBy) {
+			return PageRequest.of(pageNo, pageSize);
+		}
+		return PageRequest.of(pageNo, pageSize, sortBy);
+	}
 }

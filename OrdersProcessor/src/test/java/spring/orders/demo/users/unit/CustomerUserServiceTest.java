@@ -18,8 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,7 @@ import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.constants.UserStatus;
 import spring.orders.demo.shared.AbstractUnitTestBase;
+import spring.orders.demo.users.UserProps;
 import spring.orders.demo.users.dto.AddressDTO;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
@@ -67,6 +69,9 @@ public class CustomerUserServiceTest extends AbstractUnitTestBase {
 	@Mock
 	private PasswordEncoder passwordEncoder;
 
+	@Mock
+	private UserProps userProps;
+
 	@InjectMocks
 	private CustomerUserService service;
 
@@ -75,15 +80,24 @@ public class CustomerUserServiceTest extends AbstractUnitTestBase {
 	void testFindAllUsers() {
 		final CustomerUser admin = getAdminUser();
 
-		given(userRepository.findAll(Pageable.unpaged(Sort.by("username")))) //$NON-NLS-1$
+		final String attribute = "username"; //$NON-NLS-1$
+		final PageRequest request = PageRequest.of(1, 100, Sort.by(attribute));
+		given(userRepository.findAll(request))
 			.willReturn(new PageImpl<>(List.of(admin)));
+
+		given(userProps.getPageSize())
+			.willReturn(50);
+		given(userProps.getMaxPageSize())
+			.willReturn(1000);
+		given(userProps.getDefaultSortAttribute())
+			.willReturn(attribute);
 
 		mockResponse(admin);
 
-		final List<CustomerUserResponse> all = service.findAllUsers();
+		final Page<CustomerUserResponse> all = service.findUsers(request);
 
 		assertThat(all).size().isEqualTo(1);
-		assertThat(all.get(0).getUsername()).isEqualTo(Constants.ADMIN);
+		assertThat(all.getContent().get(0).getUsername()).isEqualTo(Constants.ADMIN);
 	}
 
 	@Test
@@ -169,8 +183,6 @@ public class CustomerUserServiceTest extends AbstractUnitTestBase {
 		createRequest.setEmail(newEmail);
 		createRequest.setAddress(new AddressDTO("NY NY")); //$NON-NLS-1$
 		createRequest.setPassword(newPassword);
-
-		final CustomerUser adminUser = getAdminUser();
 
 		given(passwordEncoder.encode(newPassword))
 			.willReturn(staticEncoder.encode(newPassword));
