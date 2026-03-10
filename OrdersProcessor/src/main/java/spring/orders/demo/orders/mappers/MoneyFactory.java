@@ -1,9 +1,9 @@
-package spring.orders.demo.products.mappers;
+package spring.orders.demo.orders.mappers;
 
 import org.mapstruct.ObjectFactory;
 
-import spring.orders.demo.products.dto.MoneyDTO;
-import spring.orders.demo.products.entities.Money;
+import spring.orders.demo.orders.dto.MoneyDTO;
+import spring.orders.demo.orders.entities.Money;
 
 interface MoneyFactory {
 

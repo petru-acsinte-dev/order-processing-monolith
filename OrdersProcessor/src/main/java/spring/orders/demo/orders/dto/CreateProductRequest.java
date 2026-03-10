@@ -1,4 +1,4 @@
-package spring.orders.demo.products.dto;
+package spring.orders.demo.orders.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package spring.orders.demo.products.integration;
+package spring.orders.demo.orders.integration;
 
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -28,10 +28,10 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import spring.orders.demo.constants.Constants;
-import spring.orders.demo.products.dto.CreateProductRequest;
-import spring.orders.demo.products.dto.MoneyDTO;
-import spring.orders.demo.products.dto.ProductResponse;
-import spring.orders.demo.products.dto.UpdateProductRequest;
+import spring.orders.demo.orders.dto.CreateProductRequest;
+import spring.orders.demo.orders.dto.MoneyDTO;
+import spring.orders.demo.orders.dto.ProductResponse;
+import spring.orders.demo.orders.dto.UpdateProductRequest;
 import spring.orders.demo.shared.AbstractIntegrationTestBase;
 
 @Transactional
@@ -48,9 +48,6 @@ class ProductIT extends AbstractIntegrationTestBase{
 	private static final String FIELD_DESC = "description"; //$NON-NLS-1$
 	private static final Object FIELD_CURRENCY = "currency"; //$NON-NLS-1$
 	private static final String FIELD_EXTERNAL_ID = "externalId"; //$NON-NLS-1$
-	private static final String CONTENT_ATTR = "content"; //$NON-NLS-1$
-	private static final String ARRAY_MEMBR_TMPLT = "$[%d].%s"; //$NON-NLS-1$
-	private static final String ARRAY_MEMBR_COST_TMPLT = "$[%d].cost.%s"; //$NON-NLS-1$
 	private static final String CNT_ARRAY_MEMBR_TMPLT = "$.%s[%d].%s"; //$NON-NLS-1$
 	private static final String CNT_ARRAY_MEMBR_COST_TMPLT = "$.%s[%d].cost.%s"; //$NON-NLS-1$
 	private static final String MEMBR_COST_TMPLT = "$.cost.%s"; //$NON-NLS-1$

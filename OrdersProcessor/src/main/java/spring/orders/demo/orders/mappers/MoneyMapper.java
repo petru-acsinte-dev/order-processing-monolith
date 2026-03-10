@@ -1,10 +1,10 @@
-package spring.orders.demo.products.mappers;
+package spring.orders.demo.orders.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import spring.orders.demo.products.dto.MoneyDTO;
-import spring.orders.demo.products.entities.Money;
+import spring.orders.demo.orders.dto.MoneyDTO;
+import spring.orders.demo.orders.entities.Money;
 import spring.orders.demo.users.mappers.GlobalMapperConfig;
 
 @Mapper(config = GlobalMapperConfig.class)

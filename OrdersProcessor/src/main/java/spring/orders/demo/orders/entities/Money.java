@@ -1,4 +1,4 @@
-package spring.orders.demo.products.entities;
+package spring.orders.demo.orders.entities;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -9,7 +9,7 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import spring.orders.demo.products.exceptions.NonMatchingCurrencyException;
+import spring.orders.demo.orders.exceptions.NonMatchingCurrencyException;
 
 @Embeddable
 public class Money {

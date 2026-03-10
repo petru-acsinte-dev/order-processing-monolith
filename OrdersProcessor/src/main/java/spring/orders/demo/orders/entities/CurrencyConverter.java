@@ -1,4 +1,4 @@
-package spring.orders.demo.products.entities;
+package spring.orders.demo.orders.entities;
 
 import java.util.Currency;
 

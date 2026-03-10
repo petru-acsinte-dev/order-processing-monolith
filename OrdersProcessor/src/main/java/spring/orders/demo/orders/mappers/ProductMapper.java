@@ -1,12 +1,12 @@
-package spring.orders.demo.products.mappers;
+package spring.orders.demo.orders.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import spring.orders.demo.products.dto.CreateProductRequest;
-import spring.orders.demo.products.dto.ProductResponse;
-import spring.orders.demo.products.dto.UpdateProductRequest;
-import spring.orders.demo.products.entities.Product;
+import spring.orders.demo.orders.dto.CreateProductRequest;
+import spring.orders.demo.orders.dto.ProductResponse;
+import spring.orders.demo.orders.dto.UpdateProductRequest;
+import spring.orders.demo.orders.entities.Product;
 import spring.orders.demo.users.mappers.GlobalMapperConfig;
 
 @Mapper(config = GlobalMapperConfig.class)

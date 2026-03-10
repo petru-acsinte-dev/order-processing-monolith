@@ -1,4 +1,4 @@
-package spring.orders.demo.products.controllers;
+package spring.orders.demo.orders.controllers;
 
 import java.net.URI;
 import java.util.UUID;
@@ -26,10 +26,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import spring.orders.demo.constants.Constants;
-import spring.orders.demo.products.dto.CreateProductRequest;
-import spring.orders.demo.products.dto.ProductResponse;
-import spring.orders.demo.products.dto.UpdateProductRequest;
-import spring.orders.demo.products.services.ProductService;
+import spring.orders.demo.orders.dto.CreateProductRequest;
+import spring.orders.demo.orders.dto.ProductResponse;
+import spring.orders.demo.orders.dto.UpdateProductRequest;
+import spring.orders.demo.orders.services.ProductService;
 
 @Tag (name = "Products controller", description = "Operations related to products management")
 @RestController

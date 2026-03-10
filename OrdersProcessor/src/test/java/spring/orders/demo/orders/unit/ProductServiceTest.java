@@ -1,4 +1,4 @@
-package spring.orders.demo.products.unit;
+package spring.orders.demo.orders.unit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,15 +32,15 @@ import org.springframework.data.domain.Sort;
 
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.orders.OrderProps;
-import spring.orders.demo.products.dto.CreateProductRequest;
-import spring.orders.demo.products.dto.MoneyDTO;
-import spring.orders.demo.products.dto.ProductResponse;
-import spring.orders.demo.products.dto.UpdateProductRequest;
-import spring.orders.demo.products.entities.Money;
-import spring.orders.demo.products.entities.Product;
-import spring.orders.demo.products.mappers.ProductMapper;
-import spring.orders.demo.products.repositories.ProductRepository;
-import spring.orders.demo.products.services.ProductService;
+import spring.orders.demo.orders.dto.CreateProductRequest;
+import spring.orders.demo.orders.dto.MoneyDTO;
+import spring.orders.demo.orders.dto.ProductResponse;
+import spring.orders.demo.orders.dto.UpdateProductRequest;
+import spring.orders.demo.orders.entities.Money;
+import spring.orders.demo.orders.entities.Product;
+import spring.orders.demo.orders.mappers.ProductMapper;
+import spring.orders.demo.orders.repositories.ProductRepository;
+import spring.orders.demo.orders.services.ProductService;
 import spring.orders.demo.shared.AbstractUnitTestBase;
 
 @Tag("unit")

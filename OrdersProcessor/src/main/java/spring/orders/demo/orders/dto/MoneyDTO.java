@@ -1,4 +1,4 @@
-package spring.orders.demo.products.dto;
+package spring.orders.demo.orders.dto;
 
 import java.math.BigDecimal;
 import java.util.Currency;

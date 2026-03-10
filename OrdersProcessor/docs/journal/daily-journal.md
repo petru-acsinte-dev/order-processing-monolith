@@ -114,3 +114,8 @@ OrderProcessor - Daily journal
 -
 - fixed link templates and sorting url params
 - introducing paging for products
+
+2026-03-10
+-
+- refactored products package to orders (to include products and orders)
+- 

@@ -1,4 +1,4 @@
-package spring.orders.demo.products.services;
+package spring.orders.demo.orders.services;
 
 import java.util.UUID;
 
@@ -13,13 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.UserRole;
 import spring.orders.demo.orders.OrderProps;
-import spring.orders.demo.products.dto.CreateProductRequest;
-import spring.orders.demo.products.dto.ProductResponse;
-import spring.orders.demo.products.dto.UpdateProductRequest;
-import spring.orders.demo.products.entities.Product;
-import spring.orders.demo.products.exceptions.ProductNotFoundException;
-import spring.orders.demo.products.mappers.ProductMapper;
-import spring.orders.demo.products.repositories.ProductRepository;
+import spring.orders.demo.orders.dto.CreateProductRequest;
+import spring.orders.demo.orders.dto.ProductResponse;
+import spring.orders.demo.orders.dto.UpdateProductRequest;
+import spring.orders.demo.orders.entities.Product;
+import spring.orders.demo.orders.exceptions.ProductNotFoundException;
+import spring.orders.demo.orders.mappers.ProductMapper;
+import spring.orders.demo.orders.repositories.ProductRepository;
 import spring.orders.demo.security.SecurityUtils;
 
 @Service

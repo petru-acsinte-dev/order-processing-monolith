@@ -1,4 +1,4 @@
-package spring.orders.demo.products.mapper;
+package spring.orders.demo.orders.mapper;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,16 +14,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import spring.orders.demo.products.dto.CreateProductRequest;
-import spring.orders.demo.products.dto.MoneyDTO;
-import spring.orders.demo.products.dto.ProductResponse;
-import spring.orders.demo.products.dto.UpdateProductRequest;
-import spring.orders.demo.products.entities.Money;
-import spring.orders.demo.products.entities.Product;
-import spring.orders.demo.products.mappers.MoneyMapper;
-import spring.orders.demo.products.mappers.MoneyMapperImpl;
-import spring.orders.demo.products.mappers.ProductMapper;
-import spring.orders.demo.products.mappers.ProductMapperImpl;
+import spring.orders.demo.orders.dto.CreateProductRequest;
+import spring.orders.demo.orders.dto.MoneyDTO;
+import spring.orders.demo.orders.dto.ProductResponse;
+import spring.orders.demo.orders.dto.UpdateProductRequest;
+import spring.orders.demo.orders.entities.Money;
+import spring.orders.demo.orders.entities.Product;
+import spring.orders.demo.orders.mappers.MoneyMapper;
+import spring.orders.demo.orders.mappers.MoneyMapperImpl;
+import spring.orders.demo.orders.mappers.ProductMapper;
+import spring.orders.demo.orders.mappers.ProductMapperImpl;
 
 @Tag("mapper")
 @ExtendWith(SpringExtension.class)

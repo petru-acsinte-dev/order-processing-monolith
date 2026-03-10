@@ -1,4 +1,4 @@
-package spring.orders.demo.products.exceptions;
+package spring.orders.demo.orders.exceptions;
 
 import jakarta.validation.constraints.NotBlank;
 
