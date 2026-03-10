@@ -6,7 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
-@Entity
+@Entity( name = "UserStatus")
 @Table( name = "status", schema = "users")
 public class Status {
 

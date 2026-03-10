@@ -1,0 +1,43 @@
+package spring.orders.demo.orders.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+
+@Entity
+@Table(name = "status", schema = "orders")
+public class OrderStatus {
+
+	@Id
+	private Short id;
+
+	@NotBlank
+	@Column(name = "status")
+	private String status;
+
+	protected OrderStatus() {}
+
+	public OrderStatus(Short id, @NotBlank String status) {
+		this.id = id;
+		this.status = status;
+	}
+
+	public Short getId() {
+		return id;
+	}
+
+	public void setId(Short id) {
+		this.id = id;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+}
