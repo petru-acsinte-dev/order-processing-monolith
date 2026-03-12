@@ -118,4 +118,11 @@ OrderProcessor - Daily journal
 2026-03-10
 -
 - refactored products package to orders (to include products and orders)
-- 
+
+2026-03-11
+-
+- orders DTOs and mappers
+
+2026-03-12
+-
+- orders mapper tests

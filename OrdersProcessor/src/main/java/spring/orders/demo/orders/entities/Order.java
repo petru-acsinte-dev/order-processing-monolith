@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -46,9 +47,8 @@ public class Order {
 	private List<OrderLine> orderLines;
 
 	@Embedded
+	@AttributeOverride(name = "amount", column = @Column(name = "total_amount", precision = 19, scale = 4))
 	private Money cost;
-
-	protected Order() {}
 
 	public Long getId() {
 		return id;
@@ -96,6 +96,14 @@ public class Order {
 
 	public void setCost(Money cost) {
 		this.cost = cost;
+	}
+
+	public List<OrderLine> getOrderLines() {
+		return orderLines;
+	}
+
+	public void setOrderLines(List<OrderLine> orderLines) {
+		this.orderLines = orderLines;
 	}
 
 }

@@ -2,6 +2,7 @@ package spring.orders.demo.orders.entities;
 
 import java.math.BigDecimal;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -42,17 +43,17 @@ public class OrderLine {
 
 	@NotNull
 	@Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "unit_price", precision = 19, scale = 4))
 	private Money cost;
 
 	@NotNull
+	@PositiveOrZero
 	private int quantity;
 
 	@NotNull
 	@PositiveOrZero
 	@Column(name = "line_total", precision = 19, scale = 4)
 	private BigDecimal lineTotal;
-
-	protected OrderLine() {}
 
 	@PrePersist
 	@PreUpdate
@@ -103,11 +104,11 @@ public class OrderLine {
 		this.cost = cost;
 	}
 
-	public int getQuatity() {
+	public int getQuantity() {
 		return quantity;
 	}
 
-	public void setQuatity(int quatity) {
+	public void setQuantity(int quatity) {
 		this.quantity = quatity;
 	}
 
