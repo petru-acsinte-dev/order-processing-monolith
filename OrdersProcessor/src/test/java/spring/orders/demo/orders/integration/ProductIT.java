@@ -37,11 +37,9 @@ import spring.orders.demo.shared.AbstractIntegrationTestBase;
 @Transactional
 class ProductIT extends AbstractIntegrationTestBase{
 
+	static final int PAGE_SIZE = 50; // expected predefined products
+
 	private static final String USD = "USD"; //$NON-NLS-1$
-	private static final String TEST_ADDRESS = "nowhere"; //$NON-NLS-1$
-	private static final String USER_EMAIL = "user@dev.com"; //$NON-NLS-1$
-	private static final String TEST_PSWD = "User1234"; //$NON-NLS-1$
-	private static final String TEST_USER = "user1234"; //$NON-NLS-1$
 	private static final String FIELD_AMOUNT = "amount"; //$NON-NLS-1$
 	private static final String FIELD_SKU = "sku"; //$NON-NLS-1$
 	private static final String FIELD_NAME = "name"; //$NON-NLS-1$
@@ -53,7 +51,6 @@ class ProductIT extends AbstractIntegrationTestBase{
 	private static final String MEMBR_COST_TMPLT = "$.cost.%s"; //$NON-NLS-1$
 	private static final String MEMBR_TMPLT = "$.%s"; //$NON-NLS-1$
 	private static final Logger log = LoggerFactory.getLogger(ProductIT.class);
-	private static final int PAGE_SIZE = 50; // expected predefined products
 	private static final String ISO_4217_REGEX = "^[A-Z]{3}$"; //$NON-NLS-1$
 
 	@Override

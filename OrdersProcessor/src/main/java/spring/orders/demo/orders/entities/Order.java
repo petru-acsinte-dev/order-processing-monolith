@@ -1,6 +1,7 @@
 package spring.orders.demo.orders.entities;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,7 +45,7 @@ public class Order {
 	private LocalDateTime created;
 
 	@OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	private List<OrderLine> orderLines;
+	private List<OrderLine> orderLines = new ArrayList<>();
 
 	@Embedded
 	@AttributeOverride(name = "amount", column = @Column(name = "total_amount", precision = 19, scale = 4))

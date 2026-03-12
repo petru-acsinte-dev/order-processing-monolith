@@ -97,6 +97,7 @@ public class OrderService {
 		order.setExternalId(UUID.randomUUID());
 		order.setStatus(new OrderStatus(spring.orders.demo.constants.OrderStatus.CREATED_ID,
 										spring.orders.demo.constants.OrderStatus.CREATED));
+		order.setOrderLines(new ArrayList<>());
 		for (final Product product : products) {
 			final OrderLine line = new OrderLine();
 			line.setProduct(product);

@@ -118,7 +118,6 @@ public class ProductController {
 	@ApiResponse (responseCode = "404",
 			description = "Product not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	@PostMapping
 	public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest createRequest) {
 		final ProductResponse newProduct = service.createProduct(createRequest);

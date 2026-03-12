@@ -48,6 +48,11 @@ public abstract class AbstractIntegrationTestBase {
 	protected static final String JSON_PATH_EMAIL = "$.email"; //$NON-NLS-1$
 	protected static final String JSON_PATH_USERNAME = "$.username"; //$NON-NLS-1$
 
+	protected static final String TEST_ADDRESS = "nowhere"; //$NON-NLS-1$
+	protected static final String USER_EMAIL = "user@dev.com"; //$NON-NLS-1$
+	protected static final String TEST_PSWD = "User1234"; //$NON-NLS-1$
+	protected static final String TEST_USER = "user1234"; //$NON-NLS-1$
+
 	@Autowired
 	protected MockMvc mockMvc;
 

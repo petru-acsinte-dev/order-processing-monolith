@@ -17,6 +17,8 @@ public final class Constants {
 
 	public static final String PRODUCTS_PATH = "/products"; //$NON-NLS-1$
 
+	public static final String ORDERS_PATH = "/orders"; //$NON-NLS-1$
+
 	public static final String LOGIN_PATH = "/login/auth"; //$NON-NLS-1$
 
 	public static final String PARAM_EXTERNAL_ID = "externalId"; //$NON-NLS-1$
@@ -36,4 +38,5 @@ public final class Constants {
 	public static final String PAGE_LINK_TEMPLATE = "%s?page=%d&size=%d"; //$NON-NLS-1$
 	public static final String PAGE_LINK_SORT_TEMPLATE = "%s?page=%d&size=%d&%s"; //$NON-NLS-1$
 	public static final String PAGE_CONTENT_ATTR = "content"; //$NON-NLS-1$
+
 }

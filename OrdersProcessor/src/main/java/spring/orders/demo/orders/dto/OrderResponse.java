@@ -26,7 +26,7 @@ public class OrderResponse {
 
 	@NotBlank
 	@Schema(description = "The order status",
-			example = "CREATED")
+			example = "One of CREATED, CANCELLED, CONFIRMED, SHIPPED")
 	private String status;
 
 	@NotNull
