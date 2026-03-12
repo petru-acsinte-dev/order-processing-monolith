@@ -62,6 +62,14 @@ public class OrderLine {
 			productName = product.getName();
 			cost = product.getCost();
 		}
+		recalculateTotal();
+	}
+
+	// calculates
+	private void recalculateTotal() {
+		if (null != cost && quantity > 0) {
+			lineTotal = cost.getAmount().multiply(BigDecimal.valueOf(quantity));
+		}
 	}
 
 	public Long getId() {
@@ -102,6 +110,7 @@ public class OrderLine {
 
 	public void setCost(Money cost) {
 		this.cost = cost;
+		recalculateTotal();
 	}
 
 	public int getQuantity() {
@@ -110,6 +119,7 @@ public class OrderLine {
 
 	public void setQuantity(int quatity) {
 		this.quantity = quatity;
+		recalculateTotal();
 	}
 
 	public BigDecimal getLineTotal() {

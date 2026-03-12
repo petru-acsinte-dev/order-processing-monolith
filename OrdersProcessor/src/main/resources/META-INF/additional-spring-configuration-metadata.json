@@ -38,5 +38,15 @@
     "name": "orders.demo.orders.productsDefaultSortingAttribute",
     "type": "java.lang.String",
     "description": "The default product attribute to sort by"
+  },
+  {
+    "name": "orders.demo.orders.queryBatchSize",
+    "type": "java.lang.Integer",
+    "description": "List size for querying products"
+  },
+  {
+    "name": "orders.demo.orders.queryMaxSize",
+    "type": "java.lang.Integer",
+    "description": "Max size of a products list to query for"
   }
 ]}

@@ -126,3 +126,4 @@ OrderProcessor - Daily journal
 2026-03-12
 -
 - orders mapper tests
+- orders service: creation

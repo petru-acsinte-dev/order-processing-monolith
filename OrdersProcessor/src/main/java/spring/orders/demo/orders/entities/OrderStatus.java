@@ -14,7 +14,7 @@ public class OrderStatus {
 	private Short id;
 
 	@NotBlank
-	@Column(name = "status")
+	@Column(name = "status", nullable = false, unique = true)
 	private String status;
 
 	protected OrderStatus() {}

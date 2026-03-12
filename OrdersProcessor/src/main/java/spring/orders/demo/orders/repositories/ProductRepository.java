@@ -1,5 +1,6 @@
 package spring.orders.demo.orders.repositories;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,5 +20,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	List<Product> findBySku(String sku);
 
 	Page<Product> findByActiveTrue(Pageable pageable);
+
+	List<Product> findAllByExternalIdIn(Collection<UUID> externalIds);
 
 }

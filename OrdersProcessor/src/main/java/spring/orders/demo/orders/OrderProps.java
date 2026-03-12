@@ -13,6 +13,10 @@ public class OrderProps {
 
 	private String defaultSortAttribute;
 
+	private int queryBatchSize;
+
+	private int queryMaxSize;
+
 	/**
 	 * @return The page size used for listing products, orders, order lines
 	 */
@@ -45,6 +49,22 @@ public class OrderProps {
 
 	public void setDefaultSortAttribute(String defaultSortAttribute) {
 		this.defaultSortAttribute = defaultSortAttribute;
+	}
+
+	public int getQueryBatchSize() {
+		return queryBatchSize;
+	}
+
+	public void setQueryBatchSize(int queryBatchSize) {
+		this.queryBatchSize = queryBatchSize;
+	}
+
+	public int getQueryMaxSize() {
+		return queryMaxSize;
+	}
+
+	public void setQueryMaxSize(int queryMaxSize) {
+		this.queryMaxSize = queryMaxSize;
 	}
 
 }
