@@ -3,6 +3,8 @@ package spring.orders.demo.orders.repositories;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,5 +23,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 		    WHERE o.externalId = :id
 		""")
 		Optional<Order> findByExternalIdWithLinesAndProducts(@Param("id") UUID id);
+
+	Page<Order> findAllByCustomerExternalIdOrderByCreatedDesc(UUID ownerExternalId, Pageable pageable);
+
+	Page<Order> findAllByOrderByCreatedDesc(Pageable pageRequest);
 
 }

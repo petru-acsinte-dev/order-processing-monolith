@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import spring.orders.demo.orders.dto.MoneyDTO;
+import spring.orders.demo.orders.dto.OrderInfo;
 import spring.orders.demo.orders.dto.OrderResponse;
 import spring.orders.demo.orders.entities.Order;
 import spring.orders.demo.orders.entities.OrderLine;
@@ -41,4 +42,9 @@ public interface OrderMapper {
         // Return MoneyDTO with total and currency from the first OrderLine
         return new MoneyDTO(totalAmount, order.getOrderLines().get(0).getCost().getCurrency());
     }
+
+    @Mapping(target = "orderTotal", source = "order", qualifiedByName = "mapOrderTotal")
+	@Mapping(target = "status", source = "order", qualifiedByName = "mapOrderStatus")
+    OrderInfo toInfo(Order order);
+
 }

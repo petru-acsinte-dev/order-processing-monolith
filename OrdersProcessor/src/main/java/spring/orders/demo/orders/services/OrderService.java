@@ -14,11 +14,18 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import jakarta.transaction.Transactional;
+import spring.orders.demo.constants.Constants;
 import spring.orders.demo.orders.OrderProps;
 import spring.orders.demo.orders.dto.CreateOrderRequest;
+import spring.orders.demo.orders.dto.OrderInfo;
 import spring.orders.demo.orders.dto.OrderLineRequest;
 import spring.orders.demo.orders.dto.OrderResponse;
 import spring.orders.demo.orders.dto.UpdateOrderRequest;
@@ -29,6 +36,7 @@ import spring.orders.demo.orders.entities.OrderStatus;
 import spring.orders.demo.orders.entities.Product;
 import spring.orders.demo.orders.exceptions.EmptyProductsListException;
 import spring.orders.demo.orders.exceptions.IncompatibleProductCurrencies;
+import spring.orders.demo.orders.exceptions.OrderCannotBeModifiedException;
 import spring.orders.demo.orders.exceptions.OrderNotFoundException;
 import spring.orders.demo.orders.exceptions.ProductNotFoundException;
 import spring.orders.demo.orders.exceptions.TooManyProductsInRequest;
@@ -37,6 +45,7 @@ import spring.orders.demo.orders.repositories.OrderRepository;
 import spring.orders.demo.orders.repositories.ProductRepository;
 import spring.orders.demo.security.SecurityUtils;
 import spring.orders.demo.users.entities.CustomerUser;
+import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 import spring.orders.demo.users.exceptions.UserNotFoundException;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
 
@@ -64,6 +73,16 @@ public class OrderService {
 		this.orderProps = orderProps;
 	}
 
+	/**
+	 * Creates a new order with the specified product(s) and quantities.
+	 * @param createRequest The create request DTO.
+	 * @return The new order response DTO.
+	 * @throws EmptyProductsListException if no products are present in the request
+	 * @throws IncompatibleProductCurrencies if the added products have different currencies (known limitation)
+	 * @throws ProductNotFoundException if at least one specified product cannot be found
+	 * @throws TooManyProductsInRequest if the request size exceeds system limits
+	 *
+	 */
 	@Transactional
 	public OrderResponse createOrder(CreateOrderRequest createRequest) {
 		final Map<UUID, Integer> orderProducts = getProducts(createRequest);
@@ -79,6 +98,16 @@ public class OrderService {
 		return mapper.orderToOrderResponse(newOrder);
 	}
 
+	/**
+	 * Updates an existing order with the specified product(s) and quantities.
+	 * The update request specifies a collection of line items to add or update and a collection of product external identifiers to remove.
+	 * If the same product identifier is present in both collections, deletion takes precedence.
+	 * @param updatecreateRequest The update request DTO.
+	 * @return The updated order response DTO.
+	 * @throws IncompatibleProductCurrencies if the added products have different currencies than the order (known limitation)
+	 * @throws ProductNotFoundException if at least one specified product cannot be found
+	 * @throws TooManyProductsInRequest if the request size exceeds system limits
+	 */
 	@Transactional
 	public OrderResponse updateOrder(UUID orderExternalId, UpdateOrderRequest updateRequest) {
 		final Map<UUID, Integer> productsToUpsert = getProductsToUpsert(updateRequest);
@@ -95,11 +124,81 @@ public class OrderService {
 		return updateOrder(orderExternalId, productsToUpsert, products, externalIdsToRemove);
 	}
 
+	/**
+	 * Returns the order for the specified external Id.
+	 * @param externalId The order unique external identifier.
+	 * @return {@link OrderResponse} DTO with order details.
+	 * @throws OrderNotFoundException if the order cannot be found.
+	 */
+	@Transactional(readOnly = true)
+	public OrderResponse getOrder(UUID externalId) {
+		final Order order = orderRepository.findByExternalIdWithLinesAndProducts(externalId)
+			.orElseThrow(OrderNotFoundException::new);
+
+		checkAuthorization(order);
+
+		return mapper.orderToOrderResponse(order);
+	}
+
+	/**
+	 * Returns the orders in paged responses. By default the newest orders are first.
+	 * @param ownerId The orders owner external identifier. If null, it means all accessible orders.
+	 * @param pageable Pagination and sorting information.
+	 * @return A page containing {@link OrderInfo} DTOs with order basic details.
+	 * @throws UnauthorizedOperationException if the user making the request does not have access to the orders of the specified owner.
+	 */
+	@Transactional(readOnly = true)
+	public Page<OrderInfo> getOrders(@RequestParam(required = false) UUID ownerId,
+			Pageable pageable) {
+
+		UUID requestOwnerId = ownerId;
+		final UUID currentUserExternalId = getUserExternalId();
+		if (null != requestOwnerId) {
+			if ( ! currentUserExternalId.equals(requestOwnerId)) {
+				// only an admin can see the orders for another user
+				SecurityUtils.confirmAdminRole();
+			}
+		} else if ( ! SecurityUtils.hasRole(Constants.ADMIN_ROLE)) {
+			// defaults to current user is no filter mentioned and not an admin
+			requestOwnerId = currentUserExternalId;
+		}
+
+		final Pageable pageRequest = getPagingRequest(pageable);
+
+		final boolean filterbyOwner = null != requestOwnerId;
+		log.debug("Finding orders for {}", filterbyOwner ? requestOwnerId : "all");   //$NON-NLS-1$//$NON-NLS-2$
+		if (filterbyOwner) {
+			return orderRepository
+					.findAllByCustomerExternalIdOrderByCreatedDesc(requestOwnerId, pageRequest)
+					.map(mapper::toInfo);
+		}
+		return orderRepository.findAllByOrderByCreatedDesc(pageRequest)
+			.map(mapper::toInfo);
+	}
+
+	private void checkAuthorization(Order order) {
+		if ( ! getUserExternalId().equals(order.getCustomerExternalId())) {
+			SecurityUtils.confirmAdminRole();
+		}
+	}
+
+	private void checkImmutability(Order order) {
+		final String orderStatus = order.getStatus().getStatus();
+		if ( ! spring.orders.demo.constants.OrderStatus.CREATED.equals(orderStatus)) {
+			throw new OrderCannotBeModifiedException(orderStatus);
+		}
+	}
+
 	private OrderResponse updateOrder(UUID orderExternalId,
 			Map<UUID, Integer> productsToUpsert, List<Product> products,
 			List<UUID> externalIdsToRemove) {
 		final Order order = orderRepository.findByExternalIdWithLinesAndProducts(orderExternalId)
 									.orElseThrow(OrderNotFoundException::new);
+
+		checkAuthorization(order);
+
+		checkImmutability(order);
+
 		final Set<UUID> toRemove = null == externalIdsToRemove ?
 				Collections.emptySet() : new HashSet<>(externalIdsToRemove);
 		final List<OrderLine> lines = order.getOrderLines();
@@ -117,10 +216,14 @@ public class OrderService {
 			return false;
 		});
 
+		final Currency orderCurrency = order.getCost().getCurrency();
 		for (final Product newProduct : products) {
 			if (toRemove.contains(newProduct.getExternalId())) {
 				// remove takes precedence
 				continue;
+			}
+			if ( ! orderCurrency.getCurrencyCode().equals(newProduct.getCost().getCurrency().getCurrencyCode())) {
+				throw new IncompatibleProductCurrencies(orderCurrency, newProduct.getCost().getCurrency());
 			}
 			if (productsToUpsert.containsKey(newProduct.getExternalId())) {
 				final OrderLine newLine = new OrderLine();
@@ -222,4 +325,32 @@ public class OrderService {
 		return products.stream()
 			.collect(Collectors.toMap(OrderLineRequest::getProductId, OrderLineRequest::getQuantity));
 	}
+
+	private Pageable getPagingRequest(Pageable pageable) {
+		int pageNo = 0;
+		int pageSize = orderProps.getPageSize();
+		Sort sortBy = null == orderProps.getDefaultSortAttribute() ?
+				null : Sort.by(orderProps.getDefaultSortAttribute());
+		if (null != pageable) {
+			if (pageable.getPageNumber() > 0) {
+				pageNo = pageable.getPageNumber();
+			}
+			final int requestSize = pageable.getPageSize();
+			if (requestSize > 0
+			&& requestSize <= Constants.PAGE_SIZE_HARD_LIMIT // system imposed limit
+			&& requestSize <= orderProps.getMaxPageSize()) {
+				pageSize = requestSize;
+			}
+			if (null == sortBy) {
+				sortBy = pageable.getSort();
+			} else {
+				sortBy = pageable.getSortOr(sortBy);
+			}
+		}
+		if (null == sortBy) {
+			return PageRequest.of(pageNo, pageSize);
+		}
+		return PageRequest.of(pageNo, pageSize, sortBy);
+	}
+
 }
