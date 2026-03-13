@@ -15,11 +15,11 @@ public class UpdateOrderRequest {
 	@Schema(description = "List of product external ids for products to remove")
 	private List<UUID> removedProducts;
 
-	public List<OrderLineRequest> getUpdatedProducts() {
+	public List<OrderLineRequest> getUpsertProducts() {
 		return upsertProducts;
 	}
 
-	public void setUpdatedProducts(List<OrderLineRequest> updatedProducts) {
+	public void setUpsertProducts(List<OrderLineRequest> updatedProducts) {
 		this.upsertProducts = updatedProducts;
 	}
 

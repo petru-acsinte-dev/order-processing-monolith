@@ -1,7 +1,11 @@
 package spring.orders.demo.orders.integration;
 
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -32,7 +36,9 @@ import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.OrderStatus;
 import spring.orders.demo.orders.dto.CreateOrderRequest;
 import spring.orders.demo.orders.dto.OrderLineRequest;
+import spring.orders.demo.orders.dto.OrderResponse;
 import spring.orders.demo.orders.dto.ProductResponse;
+import spring.orders.demo.orders.dto.UpdateOrderRequest;
 import spring.orders.demo.shared.AbstractIntegrationTestBase;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 
@@ -74,6 +80,105 @@ class OrderIT extends AbstractIntegrationTestBase {
 	}
 
 	@Test
+	@DisplayName("Tests adding a product to an order and changing quantity for another")
+	@Rollback
+	void testUpdateOrder() throws Exception {
+		// selecting a random product
+		final List<ProductResponse> products = getProducts();
+		final Random random = new Random();
+		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+
+		final int quantity = 2;
+		final ResultActions creationActions = doCreateOrder(product, quantity);
+		creationActions
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED));
+
+		final MvcResult created = creationActions.andReturn();
+		final String orderLocation = created.getResponse().getHeader(HttpHeaders.LOCATION);
+		final OrderResponse newOrder = objectMapper.readValue(created.getResponse().getContentAsString(), OrderResponse.class);
+		final UUID productUUID = newOrder.getOrderLines().get(0).getProductExternalId();
+
+		// new product to add
+		ProductResponse newProductToAdd = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		// making sure the same product was not selected twice
+		while(product.getExternalId().equals(newProductToAdd.getExternalId())
+				|| (! product.getCost().getCurrency().getCurrencyCode()
+						.equals(newProductToAdd.getCost().getCurrency().getCurrencyCode()))) {
+			// pick a different product with matching currency
+			newProductToAdd = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		}
+		assertNotEquals(product.getExternalId(), newProductToAdd.getExternalId());
+
+		// changing the quantity for the product
+		final OrderLineRequest changeLineRequest = new OrderLineRequest();
+		changeLineRequest.setProductId(productUUID);
+		changeLineRequest.setQuantity(quantity * 2);
+
+		// adding new product
+		final OrderLineRequest newLineRequest = new OrderLineRequest();
+		newLineRequest.setProductId(UUID.fromString(newProductToAdd.getExternalId()));
+		newLineRequest.setQuantity(1);
+
+		// preparing the update request
+		final UpdateOrderRequest updateRequest = new UpdateOrderRequest();
+		updateRequest.setUpsertProducts(List.of(changeLineRequest, newLineRequest));
+
+		final ResultActions updateActions = mockMvc.perform(patch(orderLocation)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer())
+				.contentType(MediaType.APPLICATION_JSON)
+				.characterEncoding(StandardCharsets.UTF_8)
+				.content(objectMapper.writeValueAsString(updateRequest)));
+
+		updateActions.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_ID).value(newOrder.getExternalId().toString()))
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(matchesPattern(UUID_REGEX))) // customerExternalId
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(testUserId))
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED)) // status
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT).isNumber())
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT)
+						.value(product.getCost().getAmount()
+									.multiply(BigDecimal.valueOf(quantity * 2))
+									.add(newProductToAdd.getCost().getAmount()))) // orderTotal.amount
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY).isNotEmpty())
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY)
+						.value(product.getCost().getCurrency().getCurrencyCode()))
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY)
+						.value(newProductToAdd.getCost().getCurrency().getCurrencyCode())); // orderTotal.currency
+
+		// OrderLineDTO
+		updateActions.andExpect(jsonPath(MEMBR_TMPLT, FIELD_ORDER_LINES).isArray())
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_ORDER_LINES).value(hasSize(2)))
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_EXTERNAL_PRODUCT_ID)
+						.value(product.getExternalId())) // productExternalId
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_PRODUCT_NAME)
+						.value(product.getName())) // productName
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_QUANTITY)
+						.value(quantity * 2)) // quantity
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_LINE_TOTAL)
+						.value(
+						// needed to match BigDecimals with different scales
+						closeTo(product.getCost().getAmount().multiply(BigDecimal.valueOf(quantity * 2)).doubleValue(), 0.001))) // lineTotal
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, FIELD_ORDER_LINES, 0, FIELD_AMOUNT)
+						.value(product.getCost().getAmount())) // cost.amount
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, FIELD_ORDER_LINES, 0, FIELD_CURRENCY)
+						.value(product.getCost().getCurrency().getCurrencyCode())) // cost.currency
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 1, FIELD_EXTERNAL_PRODUCT_ID)
+						.value(newProductToAdd.getExternalId())) // productExternalId
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 1, FIELD_PRODUCT_NAME)
+						.value(newProductToAdd.getName())) // productName
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 1, FIELD_QUANTITY).value(1)) // quantity
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 1, FIELD_LINE_TOTAL)
+						.value(newProductToAdd.getCost().getAmount())) // lineTotal
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, FIELD_ORDER_LINES, 1, FIELD_AMOUNT)
+						.value(newProductToAdd.getCost().getAmount())) // cost.amount
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, FIELD_ORDER_LINES, 1, FIELD_CURRENCY)
+						.value(newProductToAdd.getCost().getCurrency().getCurrencyCode())); // cost.currency
+	}
+
+	@Test
 	@DisplayName("Tests creating an order with a single product")
 	@Rollback
 	void testCreateOrder() throws Exception {
@@ -82,19 +187,8 @@ class OrderIT extends AbstractIntegrationTestBase {
 		final Random random = new Random();
 		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
 
-		final CreateOrderRequest createRequest = new CreateOrderRequest();
-		final OrderLineRequest lineRequest = new OrderLineRequest();
-		lineRequest.setProductId(UUID.fromString(product.getExternalId()));
 		final int quantity = 2;
-		lineRequest.setQuantity(quantity);
-		createRequest.setProducts(List.of(lineRequest));
-
-		final ResultActions resultActions = mockMvc.perform(post(Constants.ORDERS_PATH)
-				.accept(MediaType.APPLICATION_JSON)
-				.header(HttpHeaders.AUTHORIZATION, getBearer())
-				.contentType(MediaType.APPLICATION_JSON)
-				.characterEncoding(StandardCharsets.UTF_8)
-				.content(objectMapper.writeValueAsString(createRequest)));
+		final ResultActions resultActions = doCreateOrder(product, quantity);
 
 		resultActions
 			.andExpect(status().isCreated())
@@ -131,6 +225,21 @@ class OrderIT extends AbstractIntegrationTestBase {
 					.value(product.getCost().getAmount()))  //cost.amount
 			.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, FIELD_ORDER_LINES, 0, FIELD_CURRENCY)
 					.value(product.getCost().getCurrency().getCurrencyCode())); // cost.currency
+	}
+
+	private ResultActions doCreateOrder(ProductResponse product, int quantity) throws Exception {
+		final CreateOrderRequest createRequest = new CreateOrderRequest();
+		final OrderLineRequest lineRequest = new OrderLineRequest();
+		lineRequest.setProductId(UUID.fromString(product.getExternalId()));
+		lineRequest.setQuantity(quantity);
+		createRequest.setProducts(List.of(lineRequest));
+
+		return mockMvc.perform(post(Constants.ORDERS_PATH)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer())
+				.contentType(MediaType.APPLICATION_JSON)
+				.characterEncoding(StandardCharsets.UTF_8)
+				.content(objectMapper.writeValueAsString(createRequest)));
 	}
 
 	@Test

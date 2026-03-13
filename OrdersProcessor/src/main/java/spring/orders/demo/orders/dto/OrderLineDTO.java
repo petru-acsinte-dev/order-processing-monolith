@@ -8,6 +8,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Order line DTO used to represent order lines in {@link OrderResponse}
+ */
 public class OrderLineDTO {
 
 	@NotNull

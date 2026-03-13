@@ -128,3 +128,7 @@ OrderProcessor - Daily journal
 - orders mapper tests
 - orders creation: service + controller + integration test
 - fixes for incorrect http status on product responses
+
+2026-03-13
+-
+- order update: service + controller + integration test

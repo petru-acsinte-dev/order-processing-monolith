@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * DTO used to create or update an order line
+ */
 public class OrderLineRequest {
 
 	@Schema(description = "Unique product external id",
