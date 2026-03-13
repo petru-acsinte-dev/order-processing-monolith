@@ -1,5 +1,6 @@
 package spring.orders.demo.orders.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -8,7 +9,7 @@ public class CreateOrderRequest {
 
 	// product external id, quantity
 	@NotEmpty
-	private List<OrderLineRequest> products;
+	private List<OrderLineRequest> products = new ArrayList<>();
 
 	public List<OrderLineRequest> getProducts() {
 		return products;

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.Rollback;
@@ -89,7 +90,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
 
 		final int quantity = 2;
-		final ResultActions creationActions = doCreateOrder(product, quantity);
+		final ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
 		creationActions
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED));
@@ -179,6 +180,85 @@ class OrderIT extends AbstractIntegrationTestBase {
 	}
 
 	@Test
+	@DisplayName("Tests removing products from an order")
+	@Rollback
+	/**
+	 * The test creates an order with 5 products and removes 4 of them.
+	 * Checks that only one correct product remains.
+	 * @throws Exception
+	 */
+	void testRemoveFromOrder() throws Exception {
+		// selecting a random product
+		final List<ProductResponse> products = getProducts();
+		final ProductResponse product0 = products.get(0);
+		final ProductResponse product1 = products.get(1);
+		final ProductResponse product2 = products.get(2);
+		final ProductResponse product3 = products.get(3);
+		final ProductResponse product4 = products.get(4);
+
+		final int quantity = 1;
+		final ResultActions creationActions = doCreateOrder(List.of(Pair.of(product0, quantity),
+																	Pair.of(product1, quantity * 2),
+																	Pair.of(product2, quantity * 3),
+																	Pair.of(product3, quantity * 4),
+																	Pair.of(product4, quantity * 5)));
+		creationActions
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED));
+
+		final MvcResult created = creationActions.andReturn();
+		final String orderLocation = created.getResponse().getHeader(HttpHeaders.LOCATION);
+		final OrderResponse newOrder = objectMapper.readValue(created.getResponse().getContentAsString(), OrderResponse.class);
+
+		// preparing the update request
+		final UpdateOrderRequest updateRequest = new UpdateOrderRequest();
+		updateRequest.setRemovedProducts(List.of(UUID.fromString(product1.getExternalId()),
+												UUID.fromString(product2.getExternalId()),
+												UUID.fromString(product3.getExternalId()),
+												UUID.fromString(product4.getExternalId())));
+
+		final ResultActions updateActions = mockMvc.perform(patch(orderLocation)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer())
+				.contentType(MediaType.APPLICATION_JSON)
+				.characterEncoding(StandardCharsets.UTF_8)
+				.content(objectMapper.writeValueAsString(updateRequest)));
+
+		updateActions.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_ID).value(newOrder.getExternalId().toString()))
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(matchesPattern(UUID_REGEX))) // customerExternalId
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(testUserId))
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED)) // status
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT).isNumber())
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT)
+						.value(product0.getCost().getAmount())) // orderTotal.amount
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY).isNotEmpty())
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY)
+						.value(product0.getCost().getCurrency().getCurrencyCode()))
+				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY)
+						.value(product1.getCost().getCurrency().getCurrencyCode())); // orderTotal.currency
+
+		// OrderLineDTO
+		updateActions.andExpect(jsonPath(MEMBR_TMPLT, FIELD_ORDER_LINES).isArray())
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_ORDER_LINES).value(hasSize(1)))
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_EXTERNAL_PRODUCT_ID)
+						.value(product0.getExternalId())) // productExternalId
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_PRODUCT_NAME)
+						.value(product0.getName())) // productName
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_QUANTITY)
+						.value(quantity)) // quantity
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_TMPLT, FIELD_ORDER_LINES, 0, FIELD_LINE_TOTAL)
+						.value(
+						// needed to match BigDecimals with different scales
+						closeTo(product0.getCost().getAmount().multiply(BigDecimal.valueOf(quantity)).doubleValue(), 0.001))) // lineTotal
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, FIELD_ORDER_LINES, 0, FIELD_AMOUNT)
+						.value(product0.getCost().getAmount())) // cost.amount
+				.andExpect(jsonPath(CNT_ARRAY_MEMBR_COST_TMPLT, FIELD_ORDER_LINES, 0, FIELD_CURRENCY)
+						.value(product0.getCost().getCurrency().getCurrencyCode())); // cost.currency
+	}
+
+	@Test
 	@DisplayName("Tests creating an order with a single product")
 	@Rollback
 	void testCreateOrder() throws Exception {
@@ -188,7 +268,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
 
 		final int quantity = 2;
-		final ResultActions resultActions = doCreateOrder(product, quantity);
+		final ResultActions resultActions = doCreateOrder(List.of(Pair.of(product, quantity)));
 
 		resultActions
 			.andExpect(status().isCreated())
@@ -227,12 +307,14 @@ class OrderIT extends AbstractIntegrationTestBase {
 					.value(product.getCost().getCurrency().getCurrencyCode())); // cost.currency
 	}
 
-	private ResultActions doCreateOrder(ProductResponse product, int quantity) throws Exception {
+	private ResultActions doCreateOrder(List<Pair<ProductResponse, Integer>> lines) throws Exception {
 		final CreateOrderRequest createRequest = new CreateOrderRequest();
-		final OrderLineRequest lineRequest = new OrderLineRequest();
-		lineRequest.setProductId(UUID.fromString(product.getExternalId()));
-		lineRequest.setQuantity(quantity);
-		createRequest.setProducts(List.of(lineRequest));
+		for (final Pair<ProductResponse, Integer> line : lines) {
+			final OrderLineRequest lineRequest = new OrderLineRequest();
+			lineRequest.setProductId(UUID.fromString(line.getFirst().getExternalId()));
+			lineRequest.setQuantity(line.getSecond());
+			createRequest.getProducts().add(lineRequest);
+		}
 
 		return mockMvc.perform(post(Constants.ORDERS_PATH)
 				.accept(MediaType.APPLICATION_JSON)

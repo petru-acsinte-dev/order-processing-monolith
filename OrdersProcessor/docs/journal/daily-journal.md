@@ -132,3 +132,4 @@ OrderProcessor - Daily journal
 2026-03-13
 -
 - order update: service + controller + integration test
+- added integration test for removing products from an order
