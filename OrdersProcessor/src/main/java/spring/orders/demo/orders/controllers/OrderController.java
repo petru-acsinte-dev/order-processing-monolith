@@ -160,7 +160,7 @@ public class OrderController {
 				description = "The specified optional owner was not found",
 				content = @Content(schema = @Schema(hidden = true)))
 	@GetMapping
-	public Page<OrderInfo> getAvailableProducts(
+	public Page<OrderInfo> getOrders(
 			@RequestParam(required = false) UUID ownerId,
 			Pageable pageable) {
 		return service.getOrders(ownerId, pageable);

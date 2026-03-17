@@ -3,6 +3,7 @@ package spring.orders.demo.orders.integration;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -36,6 +37,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.order.Status;
 import spring.orders.demo.orders.dto.CreateOrderRequest;
+import spring.orders.demo.orders.dto.OrderInfo;
 import spring.orders.demo.orders.dto.OrderLineRequest;
 import spring.orders.demo.orders.dto.OrderResponse;
 import spring.orders.demo.orders.dto.ProductResponse;
@@ -334,6 +336,88 @@ class OrderIT extends AbstractIntegrationTestBase {
 		cancel(orderLocation);
 	}
 
+	@Test
+	@DisplayName("Tests retrieving the placed orders")
+	@Rollback
+	void testGetOrders() throws Exception {
+		// selecting a random product
+		final List<ProductResponse> products = getProducts();
+		final Random random = new Random();
+		ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+
+		loginAs(Constants.ADMIN, Constants.ADMIN);
+
+		ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, 1)));
+		creationActions.andExpect(status().isCreated());
+
+		loginAs(TEST_USER, TEST_PSWD);
+
+		product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		final int quantity = 2;
+		creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
+		creationActions.andExpect(status().isCreated());
+
+		MvcResult created = creationActions.andReturn();
+		final String order1Location = created.getResponse().getHeader(HttpHeaders.LOCATION);
+
+		// should be able to confirm
+		confirm(order1Location);
+
+		product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
+		creationActions.andExpect(status().isCreated());
+
+		created = creationActions.andReturn();
+		final String order2Location = created.getResponse().getHeader(HttpHeaders.LOCATION);
+
+		// should be able to cancel (not yet shipped)
+		cancel(order2Location);
+
+		MvcResult result = mockMvc.perform(get(Constants.ORDERS_PATH)
+					.accept(MediaType.APPLICATION_JSON)
+					.header(HttpHeaders.AUTHORIZATION, getBearer()))
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR).isArray()) //$NON-NLS-1$
+			.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR + ".length()").value(2)) //$NON-NLS-1$ //$NON-NLS-2$
+			.andReturn();
+		JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
+		JsonNode contentNode = root.get(Constants.PAGE_CONTENT_ATTR);
+		List<OrderInfo> contents = objectMapper.convertValue(contentNode, new TypeReference<List<OrderInfo>>() {});
+
+		for (final OrderInfo orderResponse : contents) {
+			if (order1Location.endsWith(orderResponse.getExternalId().toString())) {
+				assertEquals(Status.CONFIRMED.name(), orderResponse.getStatus());
+				continue;
+			}
+			assertEquals(Status.CANCELLED.name(), orderResponse.getStatus());
+		}
+
+		loginAs(Constants.ADMIN, Constants.ADMIN);
+
+		result = mockMvc.perform(get(Constants.ORDERS_PATH)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer()))
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR).isArray()) //$NON-NLS-1$
+			.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR + ".length()").value(3)) //$NON-NLS-1$ //$NON-NLS-2$
+			.andReturn();
+		root = objectMapper.readTree(result.getResponse().getContentAsString());
+		contentNode = root.get(Constants.PAGE_CONTENT_ATTR);
+		contents = objectMapper.convertValue(contentNode, new TypeReference<List<OrderInfo>>() {});
+
+		for (final OrderInfo orderResponse : contents) {
+			if (order1Location.endsWith(orderResponse.getExternalId().toString())) {
+				assertEquals(Status.CONFIRMED.name(), orderResponse.getStatus());
+			} else if (order2Location.endsWith(orderResponse.getExternalId().toString())) {
+				assertEquals(Status.CANCELLED.name(), orderResponse.getStatus());
+			} else {
+				assertEquals(Status.CREATED.name(), orderResponse.getStatus());
+			}
+		}
+	}
+
 	private void confirm(String orderLocation) throws Exception {
 		updateStatus(orderLocation, "/confirm") //$NON-NLS-1$
 			.andExpect(status().isOk())
@@ -353,9 +437,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 	private ResultActions updateStatus(String orderLocation, String endpoint) throws Exception {
 		return mockMvc.perform(post(orderLocation + endpoint)
 				.accept(MediaType.APPLICATION_JSON)
-				.header(HttpHeaders.AUTHORIZATION, getBearer())
-				.contentType(MediaType.APPLICATION_JSON)
-				.characterEncoding(StandardCharsets.UTF_8));
+				.header(HttpHeaders.AUTHORIZATION, getBearer()));
 	}
 
 	private ResultActions doCreateOrder(List<Pair<ProductResponse, Integer>> lines) throws Exception {

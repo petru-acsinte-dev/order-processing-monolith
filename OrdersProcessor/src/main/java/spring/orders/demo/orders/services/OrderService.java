@@ -404,7 +404,7 @@ public class OrderService {
 					badStatus(orderExternalId, orderStatus);
 				}
 		}
-		default -> {throw new UnknownOrderStatusException(orderExternalId, existingStatus.name());}
+		default -> throw new UnknownOrderStatusException(orderExternalId, existingStatus.name());
 		}
 	}
 
