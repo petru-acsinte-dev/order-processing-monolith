@@ -134,21 +134,27 @@ public class OrderService {
 	 * A created order can be cancelled or confirmed.
 	 * A confirmed order can be shipped or cancelled.
 	 * @param orderExternalId Order unique external UUID.
-	 * @param orderStatus The new status for the order.
+	 * @param newOrderStatus The new status for the order.
 	 * @return The updated order simplified response DTO.
 	 * @throws OrderCannotBeModifiedException if the order status does not allow modifications.
 	 */
 	@Transactional
-	public OrderInfo updateOrder(UUID orderExternalId, Status orderStatus) {
+	public OrderInfo updateOrder(UUID orderExternalId, Status newOrderStatus) {
 		final Order order = orderRepository.findByExternalId(orderExternalId)
 				.orElseThrow(() -> new OrderNotFoundException(orderExternalId));
+
+		if (Status.SHIPPED == newOrderStatus) {
+			SecurityUtils.confirmAdminRole();
+		} else {
+			checkAuthorization(order);
+		}
 
 		// check if current status allows the update
 		final String currentStatus = order.getStatus().getStatus();
 		final var existingStatus = Status.valueOf(currentStatus);
-		checkCurrentStatus(orderExternalId, existingStatus, orderStatus);
+		checkCurrentStatus(orderExternalId, existingStatus, newOrderStatus);
 
-		order.setStatus(new OrderStatus(orderStatus.getId(), orderStatus.name()));
+		order.setStatus(new OrderStatus(newOrderStatus.getId(), newOrderStatus.name()));
 
 		return mapper.toInfo(order);
 	}

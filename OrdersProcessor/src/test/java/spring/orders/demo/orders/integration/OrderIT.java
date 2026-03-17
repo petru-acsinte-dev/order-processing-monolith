@@ -307,6 +307,57 @@ class OrderIT extends AbstractIntegrationTestBase {
 					.value(product.getCost().getCurrency().getCurrencyCode())); // cost.currency
 	}
 
+	@Test
+	@DisplayName("Tests changing the status for an order")
+	@Rollback
+	void testChangeOrderStatus() throws Exception {
+		// selecting a random product
+		final List<ProductResponse> products = getProducts();
+		final Random random = new Random();
+		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+
+		final int quantity = 2;
+		final ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
+
+		creationActions.andExpect(status().isCreated());
+
+		final MvcResult created = creationActions.andReturn();
+		final String orderLocation = created.getResponse().getHeader(HttpHeaders.LOCATION);
+
+		// should not be able to change to shipped
+		cannotShip(orderLocation);
+
+		// should be able to confirm
+		confirm(orderLocation);
+
+		// should be able to cancel (not yet shipped)
+		cancel(orderLocation);
+	}
+
+	private void confirm(String orderLocation) throws Exception {
+		updateStatus(orderLocation, "/confirm") //$NON-NLS-1$
+			.andExpect(status().isOk())
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(Status.CONFIRMED.name()));
+	}
+
+	private void cancel(String orderLocation) throws Exception {
+		updateStatus(orderLocation, "/cancel") //$NON-NLS-1$
+			.andExpect(status().isOk())
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(Status.CANCELLED.name()));
+	}
+
+	private void cannotShip(String orderLocation) throws Exception {
+		updateStatus(orderLocation, "/ship").andExpect(status().isForbidden()); //$NON-NLS-1$
+	}
+
+	private ResultActions updateStatus(String orderLocation, String endpoint) throws Exception {
+		return mockMvc.perform(post(orderLocation + endpoint)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer())
+				.contentType(MediaType.APPLICATION_JSON)
+				.characterEncoding(StandardCharsets.UTF_8));
+	}
+
 	private ResultActions doCreateOrder(List<Pair<ProductResponse, Integer>> lines) throws Exception {
 		final CreateOrderRequest createRequest = new CreateOrderRequest();
 		for (final Pair<ProductResponse, Integer> line : lines) {

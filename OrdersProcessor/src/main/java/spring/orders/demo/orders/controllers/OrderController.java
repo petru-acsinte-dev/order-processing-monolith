@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import spring.orders.demo.constants.Constants;
+import spring.orders.demo.constants.order.Status;
 import spring.orders.demo.orders.dto.CreateOrderRequest;
 import spring.orders.demo.orders.dto.OrderInfo;
 import spring.orders.demo.orders.dto.OrderResponse;
@@ -77,6 +78,57 @@ public class OrderController {
 		final OrderResponse changedOrder = service.updateOrder(orderId, updateRequest);
 		return ResponseEntity
 				.ok(changedOrder);
+	}
+
+	@Operation (summary = "Cancels an order",
+			description = "Cancels an existing order.")
+	@ApiResponse(responseCode = "200",
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+			schema = @Schema(implementation = OrderInfo.class)))
+	@ApiResponse (responseCode = "403",
+			description = "The user does not have permissions to cancel the order",
+			content = @Content(schema = @Schema(hidden = true)))
+	@ApiResponse (responseCode = "404",
+			description = "Order not found",
+			content = @Content(schema = @Schema(hidden = true)))
+	@PostMapping("/{orderId}/cancel")
+	public ResponseEntity<OrderInfo> cancelOrder(@PathVariable UUID orderId) {
+		final OrderInfo updatedOrder = service.updateOrder(orderId, Status.CANCELLED);
+		return ResponseEntity.ok(updatedOrder);
+	}
+
+	@Operation (summary = "Confirms an order",
+			description = "Confirms an existing draft order.")
+	@ApiResponse(responseCode = "200",
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+			schema = @Schema(implementation = OrderInfo.class)))
+	@ApiResponse (responseCode = "403",
+			description = "The user does not have permissions to confirm the order",
+			content = @Content(schema = @Schema(hidden = true)))
+	@ApiResponse (responseCode = "404",
+			description = "Order not found",
+			content = @Content(schema = @Schema(hidden = true)))
+	@PostMapping("/{orderId}/confirm")
+	public ResponseEntity<OrderInfo> confirmOrder(@PathVariable UUID orderId) {
+		final OrderInfo updatedOrder = service.updateOrder(orderId, Status.CONFIRMED);
+		return ResponseEntity.ok(updatedOrder);
+	}
+
+	@Operation (summary = "Marks an order as shipped",
+			description = "Marks an existing order as shipped.")
+	@ApiResponse(responseCode = "200",
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+			schema = @Schema(implementation = OrderInfo.class)))
+	@ApiResponse (responseCode = "403",
+			description = "The user does not have permissions to mark the order as shipped",
+			content = @Content(schema = @Schema(hidden = true)))
+	@ApiResponse (responseCode = "404",
+			description = "Order not found",
+			content = @Content(schema = @Schema(hidden = true)))
+	@PostMapping("/{orderId}/ship")
+	public ResponseEntity<OrderInfo> shipOrder(@PathVariable UUID orderId) {
+		final OrderInfo updatedOrder = service.updateOrder(orderId, Status.SHIPPED);
+		return ResponseEntity.ok(updatedOrder);
 	}
 
 	@Operation (summary = "Retrieves an order",
