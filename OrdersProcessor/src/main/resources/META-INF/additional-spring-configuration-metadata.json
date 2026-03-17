@@ -48,5 +48,15 @@
     "name": "orders.demo.orders.queryMaxSize",
     "type": "java.lang.Integer",
     "description": "Max size of a products list to query for"
+  },
+  {
+    "name": "orders.demo.ship.pageSize",
+    "type": "java.lang.Integer",
+    "description": "The page size for listing fulfilments"
+  },
+  {
+    "name": "orders.demo.ship.maxPageSize",
+    "type": "java.lang.Integer",
+    "description": "Maximum page size for request (will not overwrite system hard limit of 10_000)"
   }
 ]}
