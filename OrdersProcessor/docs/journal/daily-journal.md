@@ -135,3 +135,8 @@ OrderProcessor - Daily journal
 - added integration test for removing products from an order
 - getting an order + listing accessible orders (for current owner or by specified owner) in controller + service
 - documented order controller and service
+
+2026-03-17
+-
+- order service status update; moved OrderStatus to an enum and renamed it status to avoid conflicts with OrderStatus entity
+- 

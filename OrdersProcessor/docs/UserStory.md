@@ -35,19 +35,19 @@ System:
 - creates a new order when the first products are selected
 - maintains the order in a mutable state, allowing products to be added or removed
 - snapshots each product name and current price into the order lines
+- recalculates the total amount for the order upon each order line change
 
 Constraints
 - the order can be modified until confirmed
 - the order can be empty if all the added products are removed
 
 Result  
-The system maintains a draft order for the current user, reflecting the products, quatities and pricing.
+The system maintains a draft order for the current user, reflecting the products, quantities and pricing.
 
 **4. Order confirmation**  
 The user confirms the order.  
 System:
 - locks up the order
-- calculates the total amount for the order
 - changes the order status to CONFIRMED
 
 Result  

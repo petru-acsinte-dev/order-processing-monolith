@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import spring.orders.demo.orders.exceptions.EmptyProductsListException;
 import spring.orders.demo.orders.exceptions.IncompatibleProductCurrencies;
+import spring.orders.demo.orders.exceptions.OrderCannotBeModifiedException;
 import spring.orders.demo.orders.exceptions.TooManyProductsInRequest;
 import spring.orders.demo.users.exceptions.ApiError;
 import spring.orders.demo.users.exceptions.ApiErrors;
@@ -36,5 +37,12 @@ public class OrderControllerAdvice {
 				String.format("Request size %s exceed %s limit",
 						tooBig.getRequestSize(),
 						tooBig.getSystemMax()));
+	}
+
+	@ExceptionHandler(OrderCannotBeModifiedException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiError handleOrderCannotBeModified(OrderCannotBeModifiedException dont) {
+		return new ApiError(ApiErrors.ORDER_STATUS_DOES_NOT_ALLOW_OP,
+				String.format("Order %s is %s", dont.getExternalId(), dont.getOrderStatus()));
 	}
 }

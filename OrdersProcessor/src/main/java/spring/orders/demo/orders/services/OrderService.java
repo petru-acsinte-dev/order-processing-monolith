@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import spring.orders.demo.constants.Constants;
+import spring.orders.demo.constants.order.Status;
 import spring.orders.demo.orders.OrderProps;
 import spring.orders.demo.orders.dto.CreateOrderRequest;
 import spring.orders.demo.orders.dto.OrderInfo;
@@ -40,6 +41,7 @@ import spring.orders.demo.orders.exceptions.OrderCannotBeModifiedException;
 import spring.orders.demo.orders.exceptions.OrderNotFoundException;
 import spring.orders.demo.orders.exceptions.ProductNotFoundException;
 import spring.orders.demo.orders.exceptions.TooManyProductsInRequest;
+import spring.orders.demo.orders.exceptions.UnknownOrderStatusException;
 import spring.orders.demo.orders.mappers.OrderMapper;
 import spring.orders.demo.orders.repositories.OrderRepository;
 import spring.orders.demo.orders.repositories.ProductRepository;
@@ -102,11 +104,13 @@ public class OrderService {
 	 * Updates an existing order with the specified product(s) and quantities.
 	 * The update request specifies a collection of line items to add or update and a collection of product external identifiers to remove.
 	 * If the same product identifier is present in both collections, deletion takes precedence.
+	 * @param orderExternalId Order unique external UUID.
 	 * @param updatecreateRequest The update request DTO.
 	 * @return The updated order response DTO.
-	 * @throws IncompatibleProductCurrencies if the added products have different currencies than the order (known limitation)
-	 * @throws ProductNotFoundException if at least one specified product cannot be found
-	 * @throws TooManyProductsInRequest if the request size exceeds system limits
+	 * @throws IncompatibleProductCurrencies if the added products have different currencies than the order (known limitation).
+	 * @throws ProductNotFoundException if at least one specified product cannot be found.
+	 * @throws TooManyProductsInRequest if the request size exceeds system limits.
+	 * @throws OrderCannotBeModifiedException if the order status does not allow modifications.
 	 */
 	@Transactional
 	public OrderResponse updateOrder(UUID orderExternalId, UpdateOrderRequest updateRequest) {
@@ -125,6 +129,31 @@ public class OrderService {
 	}
 
 	/**
+	 * Updates an existing order status if the current status allows the update.
+	 * A cancelled or shipped order cannot have its status changed.
+	 * A created order can be cancelled or confirmed.
+	 * A confirmed order can be shipped or cancelled.
+	 * @param orderExternalId Order unique external UUID.
+	 * @param orderStatus The new status for the order.
+	 * @return The updated order simplified response DTO.
+	 * @throws OrderCannotBeModifiedException if the order status does not allow modifications.
+	 */
+	@Transactional
+	public OrderInfo updateOrder(UUID orderExternalId, Status orderStatus) {
+		final Order order = orderRepository.findByExternalId(orderExternalId)
+				.orElseThrow(() -> new OrderNotFoundException(orderExternalId));
+
+		// check if current status allows the update
+		final String currentStatus = order.getStatus().getStatus();
+		final var existingStatus = Status.valueOf(currentStatus);
+		checkCurrentStatus(orderExternalId, existingStatus, orderStatus);
+
+		order.setStatus(new OrderStatus(orderStatus.getId(), orderStatus.name()));
+
+		return mapper.toInfo(order);
+	}
+
+	/**
 	 * Returns the order for the specified external Id.
 	 * @param externalId The order unique external identifier.
 	 * @return {@link OrderResponse} DTO with order details.
@@ -133,7 +162,7 @@ public class OrderService {
 	@Transactional(readOnly = true)
 	public OrderResponse getOrder(UUID externalId) {
 		final Order order = orderRepository.findByExternalIdWithLinesAndProducts(externalId)
-			.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(() -> new OrderNotFoundException(externalId));
 
 		checkAuthorization(order);
 
@@ -184,8 +213,8 @@ public class OrderService {
 
 	private void checkImmutability(Order order) {
 		final String orderStatus = order.getStatus().getStatus();
-		if ( ! spring.orders.demo.constants.OrderStatus.CREATED.equals(orderStatus)) {
-			throw new OrderCannotBeModifiedException(orderStatus);
+		if ( ! Status.CREATED.name().equals(orderStatus)) {
+			throw new OrderCannotBeModifiedException(order.getExternalId(), orderStatus);
 		}
 	}
 
@@ -193,7 +222,7 @@ public class OrderService {
 			Map<UUID, Integer> productsToUpsert, List<Product> products,
 			List<UUID> externalIdsToRemove) {
 		final Order order = orderRepository.findByExternalIdWithLinesAndProducts(orderExternalId)
-									.orElseThrow(OrderNotFoundException::new);
+									.orElseThrow(() -> new OrderNotFoundException(orderExternalId));
 
 		checkAuthorization(order);
 
@@ -260,8 +289,7 @@ public class OrderService {
 		order.setCreated(LocalDateTime.now());
 		order.setCustomerExternalId(getUserExternalId());
 		order.setExternalId(UUID.randomUUID());
-		order.setStatus(new OrderStatus(spring.orders.demo.constants.OrderStatus.CREATED_ID,
-										spring.orders.demo.constants.OrderStatus.CREATED));
+		order.setStatus(new OrderStatus(Status.CREATED.getId(), Status.CREATED.name()));
 		order.setOrderLines(new ArrayList<>());
 		for (final Product product : products) {
 			final OrderLine line = new OrderLine();
@@ -351,6 +379,31 @@ public class OrderService {
 			return PageRequest.of(pageNo, pageSize);
 		}
 		return PageRequest.of(pageNo, pageSize, sortBy);
+	}
+
+	private void checkCurrentStatus(UUID orderExternalId,
+									Status existingStatus,
+									Status orderStatus) {
+		switch(existingStatus) {
+		case CANCELLED, SHIPPED -> badStatus(orderExternalId, orderStatus);
+		case CREATED -> {
+			if ((Status.CONFIRMED != orderStatus)
+					&& (Status.CANCELLED != orderStatus)) {
+				badStatus(orderExternalId, orderStatus);
+			}
+		}
+		case CONFIRMED -> {
+			if ((Status.SHIPPED != orderStatus)
+					&& (Status.CANCELLED != orderStatus)) {
+					badStatus(orderExternalId, orderStatus);
+				}
+		}
+		default -> {throw new UnknownOrderStatusException(orderExternalId, existingStatus.name());}
+		}
+	}
+
+	private void badStatus(UUID orderExternalId, Status orderStatus) {
+		throw new OrderCannotBeModifiedException(orderExternalId, orderStatus.name());
 	}
 
 }

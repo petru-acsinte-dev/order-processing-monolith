@@ -34,7 +34,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import spring.orders.demo.constants.Constants;
-import spring.orders.demo.constants.OrderStatus;
+import spring.orders.demo.constants.order.Status;
 import spring.orders.demo.orders.dto.CreateOrderRequest;
 import spring.orders.demo.orders.dto.OrderLineRequest;
 import spring.orders.demo.orders.dto.OrderResponse;
@@ -93,7 +93,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 		final ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
 		creationActions
 			.andExpect(status().isCreated())
-			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED));
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(Status.CREATED.name()));
 
 		final MvcResult created = creationActions.andReturn();
 		final String orderLocation = created.getResponse().getHeader(HttpHeaders.LOCATION);
@@ -137,7 +137,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_ID).value(newOrder.getExternalId().toString()))
 				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(matchesPattern(UUID_REGEX))) // customerExternalId
 				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(testUserId))
-				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED)) // status
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(Status.CREATED.name())) // status
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT).isNumber())
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT)
 						.value(product.getCost().getAmount()
@@ -204,7 +204,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 																	Pair.of(product4, quantity * 5)));
 		creationActions
 			.andExpect(status().isCreated())
-			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED));
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(Status.CREATED.name()));
 
 		final MvcResult created = creationActions.andReturn();
 		final String orderLocation = created.getResponse().getHeader(HttpHeaders.LOCATION);
@@ -229,7 +229,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_ID).value(newOrder.getExternalId().toString()))
 				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(matchesPattern(UUID_REGEX))) // customerExternalId
 				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID).value(testUserId))
-				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(OrderStatus.CREATED)) // status
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(Status.CREATED.name())) // status
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT).isNumber())
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT)
 						.value(product0.getCost().getAmount())) // orderTotal.amount
@@ -281,7 +281,7 @@ class OrderIT extends AbstractIntegrationTestBase {
 			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_EXTERNAL_USER_ID)
 					.value(testUserId))
 			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS)
-					.value(OrderStatus.CREATED)) // status
+					.value(Status.CREATED.name())) // status
 			.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT).isNumber())
 			.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT)
 					.value(product.getCost().getAmount().multiply(BigDecimal.valueOf(quantity)))) // orderTotal.amount
