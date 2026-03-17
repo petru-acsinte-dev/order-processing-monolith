@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +47,7 @@ import spring.orders.demo.orders.mappers.OrderMapper;
 import spring.orders.demo.orders.repositories.OrderRepository;
 import spring.orders.demo.orders.repositories.ProductRepository;
 import spring.orders.demo.security.SecurityUtils;
+import spring.orders.demo.ship.events.OrderConfirmedEvent;
 import spring.orders.demo.users.entities.CustomerUser;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 import spring.orders.demo.users.exceptions.UserNotFoundException;
@@ -66,13 +68,20 @@ public class OrderService {
 
 	private final OrderProps orderProps;
 
-	public OrderService(CustomerUserRepository userRepository, OrderRepository orderRepository,
-			ProductRepository productRepository, OrderMapper mapper, OrderProps orderProps) {
+	private final ApplicationEventPublisher publisher;
+
+	public OrderService(CustomerUserRepository userRepository,
+						OrderRepository orderRepository,
+						ProductRepository productRepository,
+						OrderMapper mapper,
+						OrderProps orderProps,
+						ApplicationEventPublisher publisher) {
 		this.userRepository = userRepository;
 		this.orderRepository = orderRepository;
 		this.productRepository = productRepository;
 		this.mapper = mapper;
 		this.orderProps = orderProps;
+		this.publisher = publisher;
 	}
 
 	/**
@@ -143,6 +152,7 @@ public class OrderService {
 		final Order order = orderRepository.findByExternalId(orderExternalId)
 				.orElseThrow(() -> new OrderNotFoundException(orderExternalId));
 
+		// FIXME: The shipped status should be set by an event
 		if (Status.SHIPPED == newOrderStatus) {
 			SecurityUtils.confirmAdminRole();
 		} else {
@@ -155,6 +165,8 @@ public class OrderService {
 		checkCurrentStatus(orderExternalId, existingStatus, newOrderStatus);
 
 		order.setStatus(new OrderStatus(newOrderStatus.getId(), newOrderStatus.name()));
+
+		publisher.publishEvent(new OrderConfirmedEvent(order.getExternalId()));
 
 		return mapper.toInfo(order);
 	}

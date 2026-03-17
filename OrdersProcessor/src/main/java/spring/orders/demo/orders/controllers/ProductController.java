@@ -80,7 +80,7 @@ public class ProductController {
 		return service.updateProduct(uuid, updateRequest);
 	}
 
-	@Operation (summary = "Deletes a product",
+	@Operation (summary = "Marks a product as inactive",
 		description = "Admin operation which archives a product present in the system.")
 	@ApiResponse(responseCode = "204",
 		description = "Product deleted successfully",

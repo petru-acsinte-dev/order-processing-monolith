@@ -11,6 +11,10 @@ public class ShipProps {
 
 	private int maxPageSize;
 
+	private String shipmentSortingAttribute;
+
+	private String fulfillmentSortingAttribute;
+
 	/**
 	 * @return The page size used for listing products, orders, order lines
 	 */
@@ -32,6 +36,22 @@ public class ShipProps {
 
 	public void setMaxPageSize(int maxPageSize) {
 		this.maxPageSize = maxPageSize;
+	}
+
+	public String getShipmentSortingAttribute() {
+		return shipmentSortingAttribute;
+	}
+
+	public void setShipmentSortingAttribute(String shipmentSortingAttribute) {
+		this.shipmentSortingAttribute = shipmentSortingAttribute;
+	}
+
+	public String getFulfillmentSortingAttribute() {
+		return fulfillmentSortingAttribute;
+	}
+
+	public void setFulfillmentSortingAttribute(String fulfillmentSortingAttribute) {
+		this.fulfillmentSortingAttribute = fulfillmentSortingAttribute;
 	}
 
 }

@@ -13,7 +13,8 @@ import spring.orders.demo.ship.entities.Fulfillment;
 @Repository
 public interface FulfillmentRepository extends JpaRepository<Fulfillment, Long> {
 
-	Page<Fulfillment> findAllSortByCreatedDesc(Pageable pagingRequest);
+	@Override
+	Page<Fulfillment> findAll(Pageable pagingRequest);
 
 	Optional<Fulfillment> findByOrderExternalId(UUID orderExternalId);
 

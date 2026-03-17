@@ -58,5 +58,15 @@
     "name": "orders.demo.ship.maxPageSize",
     "type": "java.lang.Integer",
     "description": "Maximum page size for request (will not overwrite system hard limit of 10_000)"
+  },
+  {
+    "name": "orders.demo.ship.shipmentSortingAttribute",
+    "type": "java.lang.String",
+    "description": "A description for 'orders.demo.ship.shipmentSortingAttribute'"
+  },
+  {
+    "name": "orders.demo.ship.fulfillmentSortingAttribute",
+    "type": "java.lang.String",
+    "description": "The default attribute to sort by"
   }
 ]}
