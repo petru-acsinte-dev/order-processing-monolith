@@ -19,6 +19,10 @@ public final class Constants {
 
 	public static final String ORDERS_PATH = "/orders"; //$NON-NLS-1$
 
+	public static final String FULFILLMENTS_PATH = "/fulfillments"; //$NON-NLS-1$
+
+	public static final String SHIPMENTS_PATH = "/shipments"; //$NON-NLS-1$
+
 	public static final String LOGIN_PATH = "/login/auth"; //$NON-NLS-1$
 
 	public static final String PARAM_EXTERNAL_ID = "externalId"; //$NON-NLS-1$

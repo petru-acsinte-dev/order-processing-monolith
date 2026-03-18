@@ -21,7 +21,7 @@ import spring.orders.demo.ship.entities.ShipStatus;
 import spring.orders.demo.ship.entities.Shipment;
 import spring.orders.demo.ship.events.OrderShippedEvent;
 import spring.orders.demo.ship.exceptions.OrderAlreadyShippedException;
-import spring.orders.demo.ship.exceptions.ShipmentNotFound;
+import spring.orders.demo.ship.exceptions.ShipmentNotFoundException;
 import spring.orders.demo.ship.exceptions.ShippingStatusNotFoundException;
 import spring.orders.demo.ship.mappers.ShipmentMapper;
 import spring.orders.demo.ship.repositories.ShipStatusRepository;
@@ -79,7 +79,7 @@ public class ShipmentService {
 		SecurityUtils.confirmAdminRole();
 
 		final Shipment shipment = repository.findByOrderExternalId(orderExternalId)
-			.orElseThrow(() -> new ShipmentNotFound(orderExternalId));
+			.orElseThrow(() -> new ShipmentNotFoundException(orderExternalId));
 
 		return mapper.toResponse(shipment);
 	}

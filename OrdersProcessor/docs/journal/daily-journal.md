@@ -141,3 +141,8 @@ OrderProcessor - Daily journal
 - order service status update; moved OrderStatus to an enum and renamed it status to avoid conflicts with OrderStatus entity
 - integration tests for getting orders and updating order status based on its current status
 - created shipping entities + DTOs, services
+- created events and listeners for order, fulfillment and shipping inter-communication
+
+2026-03-18
+-
+- created fulfillment controller and fulfillment integration tests

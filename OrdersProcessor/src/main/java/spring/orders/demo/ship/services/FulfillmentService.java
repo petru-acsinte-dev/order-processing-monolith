@@ -20,8 +20,7 @@ import spring.orders.demo.ship.dto.FulfillmentResponse;
 import spring.orders.demo.ship.entities.Fulfillment;
 import spring.orders.demo.ship.entities.ShipStatus;
 import spring.orders.demo.ship.events.OrderFulfilledEvent;
-import spring.orders.demo.ship.exceptions.BadExistingFulfillmentStatus;
-import spring.orders.demo.ship.exceptions.FulfillmentNotFound;
+import spring.orders.demo.ship.exceptions.BadExistingFulfillmentStatusException;
 import spring.orders.demo.ship.exceptions.FulfillmentNotFoundException;
 import spring.orders.demo.ship.exceptions.ShippingStatusNotFoundException;
 import spring.orders.demo.ship.mappers.FulfillmentMapper;
@@ -81,7 +80,7 @@ public class FulfillmentService {
 			// if a fulfillment exists, it must be ready to ship (in which case this is a no-op)
 			final ShipStatus existingStatus = fulfillment.get().getStatus();
 			if ( ! Status.READY_TO_SHIP.name().equals(existingStatus.getStatus())) {
-				throw new BadExistingFulfillmentStatus(orderExternalId, existingStatus.getStatus());
+				throw new BadExistingFulfillmentStatusException(orderExternalId, existingStatus.getStatus());
 			}
 			return mapper.toResponse(fulfillment.get());
 		}
@@ -111,7 +110,7 @@ public class FulfillmentService {
 
 		final ShipStatus status = fulfillment.getStatus();
 		if (!Status.READY_TO_SHIP.name().equals(status.getStatus())) {
-			throw new BadExistingFulfillmentStatus(orderExternalId, status.getStatus());
+			throw new BadExistingFulfillmentStatusException(orderExternalId, status.getStatus());
 		}
 
 		final ShipStatus shipped = statusRepository.findByStatus(Status.SHIPPED.name())
@@ -137,7 +136,7 @@ public class FulfillmentService {
 		SecurityUtils.confirmAdminRole();
 
 		final Fulfillment fulfillment = repository.findByOrderExternalId(orderExternalId)
-			.orElseThrow(() -> new FulfillmentNotFound(orderExternalId));
+			.orElseThrow(() -> new FulfillmentNotFoundException(orderExternalId));
 
 		return mapper.toResponse(fulfillment);
 	}

@@ -2,7 +2,7 @@ package spring.orders.demo.ship.exceptions;
 
 import java.util.UUID;
 
-public class BadExistingFulfillmentStatus extends RuntimeException {
+public class BadExistingFulfillmentStatusException extends RuntimeException {
 
 	private static final long serialVersionUID = -1776252884236197100L;
 
@@ -10,7 +10,7 @@ public class BadExistingFulfillmentStatus extends RuntimeException {
 
 	private final UUID orderExternalId;
 
-	public BadExistingFulfillmentStatus(UUID orderExternalId, String status) {
+	public BadExistingFulfillmentStatusException(UUID orderExternalId, String status) {
 		this.orderExternalId = orderExternalId;
 		this.status = status;
 	}

@@ -2,13 +2,13 @@ package spring.orders.demo.ship.exceptions;
 
 import java.util.UUID;
 
-public class FulfillmentNotFound extends RuntimeException {
+public class ShipmentNotFoundException extends RuntimeException {
 
-	private static final long serialVersionUID = -8747150265744867846L;
+	private static final long serialVersionUID = -6990899007786042942L;
 
 	private final UUID externalOrderId;
 
-	public FulfillmentNotFound(UUID externalOrderId) {
+	public ShipmentNotFoundException(UUID externalOrderId) {
 		this.externalOrderId = externalOrderId;
 	}
 

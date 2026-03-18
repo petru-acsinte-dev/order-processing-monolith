@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
@@ -37,6 +38,13 @@ public class Fulfillment {
 
     @NotNull
     private LocalDateTime created;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.created == null) {
+            this.created = LocalDateTime.now();
+        }
+    }
 
 	public Long getId() {
 		return id;

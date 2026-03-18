@@ -48,6 +48,7 @@ import spring.orders.demo.orders.repositories.OrderRepository;
 import spring.orders.demo.orders.repositories.ProductRepository;
 import spring.orders.demo.security.SecurityUtils;
 import spring.orders.demo.ship.events.OrderConfirmedEvent;
+import spring.orders.demo.ship.events.OrderShippedEvent;
 import spring.orders.demo.users.entities.CustomerUser;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 import spring.orders.demo.users.exceptions.UserNotFoundException;
@@ -166,7 +167,11 @@ public class OrderService {
 
 		order.setStatus(new OrderStatus(newOrderStatus.getId(), newOrderStatus.name()));
 
-		publisher.publishEvent(new OrderConfirmedEvent(order.getExternalId()));
+		switch(newOrderStatus) {
+		case CONFIRMED -> publisher.publishEvent(new OrderConfirmedEvent(order.getExternalId()));
+		case SHIPPED -> publisher.publishEvent(new OrderShippedEvent(order.getExternalId()));
+		default -> Status.CANCELLED.name(); // no-op
+		}
 
 		return mapper.toInfo(order);
 	}

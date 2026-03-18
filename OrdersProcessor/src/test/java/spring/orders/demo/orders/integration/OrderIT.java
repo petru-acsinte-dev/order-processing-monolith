@@ -418,6 +418,29 @@ class OrderIT extends AbstractIntegrationTestBase {
 		}
 	}
 
+	@Test
+	@DisplayName("Tests creating an order with a non-existent product")
+	@Rollback
+	void testCreateOrderForMissingProduct() throws Exception {
+		// selecting a random product
+		final CreateOrderRequest createRequest = new CreateOrderRequest();
+		final OrderLineRequest lineRequest = new OrderLineRequest();
+		lineRequest.setProductId(UUID.randomUUID());
+		final int quantity = 2;
+		lineRequest.setQuantity(quantity);
+		createRequest.setProducts(List.of(lineRequest));
+
+		final ResultActions resultActions = mockMvc.perform(post(Constants.ORDERS_PATH)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer())
+				.contentType(MediaType.APPLICATION_JSON)
+				.characterEncoding(StandardCharsets.UTF_8)
+				.content(objectMapper.writeValueAsString(createRequest)));
+
+		resultActions
+			.andExpect(status().isNotFound());
+	}
+
 	private void confirm(String orderLocation) throws Exception {
 		updateStatus(orderLocation, "/confirm") //$NON-NLS-1$
 			.andExpect(status().isOk())
@@ -455,29 +478,6 @@ class OrderIT extends AbstractIntegrationTestBase {
 				.contentType(MediaType.APPLICATION_JSON)
 				.characterEncoding(StandardCharsets.UTF_8)
 				.content(objectMapper.writeValueAsString(createRequest)));
-	}
-
-	@Test
-	@DisplayName("Tests creating an order with a non-existent product")
-	@Rollback
-	void testCreateOrderForMissingProduct() throws Exception {
-		// selecting a random product
-		final CreateOrderRequest createRequest = new CreateOrderRequest();
-		final OrderLineRequest lineRequest = new OrderLineRequest();
-		lineRequest.setProductId(UUID.randomUUID());
-		final int quantity = 2;
-		lineRequest.setQuantity(quantity);
-		createRequest.setProducts(List.of(lineRequest));
-
-		final ResultActions resultActions = mockMvc.perform(post(Constants.ORDERS_PATH)
-				.accept(MediaType.APPLICATION_JSON)
-				.header(HttpHeaders.AUTHORIZATION, getBearer())
-				.contentType(MediaType.APPLICATION_JSON)
-				.characterEncoding(StandardCharsets.UTF_8)
-				.content(objectMapper.writeValueAsString(createRequest)));
-
-		resultActions
-			.andExpect(status().isNotFound());
 	}
 
 	// helper method that retrieves the first products page
