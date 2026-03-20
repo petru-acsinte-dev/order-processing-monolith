@@ -12,7 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MvcResult;
@@ -48,7 +51,7 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 	private static final String FIELD_STATUS = "status"; //$NON-NLS-1$
 
 	private static final String ORDER_STATUS_CONFIRMED = "CONFIRMED"; //$NON-NLS-1$
-	private static final String ORDER_STATUS_CANCELLED = "CANCELLED"; //$NON-NLS-1$
+	private static final String ORDER_STATUS_SHIPPED = "SHIPPED"; //$NON-NLS-1$
 	private static final String ORDER_STATUS_CREATED = "CREATED"; //$NON-NLS-1$
 
 	// used by tests to remember order outside the transactional context (workaround for events)
@@ -90,9 +93,40 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 											OrderResponse.class);
 		orderId = newOrder.getExternalId();
 
-		confirm(orderLocation);
+		confirmOrder(orderLocation);
 
 		expectedStatus = Status.READY_TO_SHIP;
+	}
+
+	@Test
+	@DisplayName("Confirms an order and ships its fulfillment")
+	@Rollback
+	void testConfirmOrderShipFulfillment() throws Exception {
+		// selecting a random product
+		final List<ProductResponse> products = getProducts();
+		final Random random = new Random();
+		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+
+		final int quantity = 2;
+		final ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
+		creationActions.andExpect(status().isCreated())
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(ORDER_STATUS_CREATED));
+
+		final MvcResult created = creationActions.andReturn();
+		final String orderLocation = created.getResponse().getHeader(HttpHeaders.LOCATION);
+		final OrderResponse newOrder = objectMapper.readValue(
+											created.getResponse().getContentAsString(),
+											OrderResponse.class);
+		orderId = newOrder.getExternalId();
+
+		confirmOrder(orderLocation);
+
+		loginAs(Constants.ADMIN, Constants.ADMIN);
+
+		shipOrder(Constants.FULFILLMENTS_PATH + '/' + orderId);
+
+		expectedStatus = Status.SHIPPED;
+
 	}
 
 	@Test
@@ -115,7 +149,7 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 				OrderResponse.class);
 		final UUID order1Id = newOrder.getExternalId();
 
-		confirm(order1Location);
+		confirmOrder(order1Location);
 
 		product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
 
@@ -128,18 +162,24 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		newOrder = objectMapper.readValue(created.getResponse().getContentAsString(), OrderResponse.class);
 		final UUID order2Id = newOrder.getExternalId();
 
-		confirm(order2Location);
+		confirmOrder(order2Location);
 
 		checkFulfillments(Status.READY_TO_SHIP, List.of(order1Id, order2Id));
 	}
 
 	// this needs to happen after the test or else events don't take effect
 	@AfterEach
-	void check() throws Exception {
+	void postTestCheck() throws Exception {
 		if (null != orderId) {
 			loginAs(Constants.ADMIN, Constants.ADMIN);
-
-			checkFulfillment(orderId, expectedStatus.name());
+			// might need to wait for eventual consistency
+			Awaitility.await(expectedStatus.name())
+				.pollInSameThread()
+				.pollDelay(1, TimeUnit.SECONDS)
+				.atMost(3, TimeUnit.SECONDS)
+				.untilAsserted(() ->
+					assertEquals(HttpStatus.OK.value(), checkFulfillment(orderId, expectedStatus.name()))
+			);
 		}
 	}
 
@@ -167,24 +207,33 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		}
 	}
 
-	private void checkFulfillment(UUID orderExternalId, String expectedStatus) throws Exception {
-		mockMvc.perform(get(Constants.FULFILLMENTS_PATH + '/' + orderExternalId)
+	private int checkFulfillment(UUID orderExternalId, String expectedStatus) throws Exception {
+		return mockMvc.perform(get(Constants.FULFILLMENTS_PATH + '/' + orderExternalId)
 				.accept(MediaType.APPLICATION_JSON)
 				.header(HttpHeaders.AUTHORIZATION, getBearer()))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(expectedStatus));
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(expectedStatus))
+			.andReturn()
+			.getResponse()
+			.getStatus();
 	}
 
-	private ResultActions updateStatus(String orderLocation, String endpoint) throws Exception {
-		return mockMvc.perform(post(orderLocation + endpoint)
+	private ResultActions updateStatus(String endPoint, String pathVariable) throws Exception {
+		return mockMvc.perform(post(endPoint + pathVariable)
 				.accept(MediaType.APPLICATION_JSON)
 				.header(HttpHeaders.AUTHORIZATION, getBearer()));
 	}
 
-	private void confirm(String orderLocation) throws Exception {
+	private void confirmOrder(String orderLocation) throws Exception {
 		updateStatus(orderLocation, "/confirm") //$NON-NLS-1$
 			.andExpect(status().isOk())
 			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(ORDER_STATUS_CONFIRMED));
+	}
+
+	private void shipOrder(String fulfillmentLocation) throws Exception {
+		updateStatus(fulfillmentLocation, "/ship") //$NON-NLS-1$
+			.andExpect(status().isOk())
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(ORDER_STATUS_SHIPPED));
 	}
 
 	private ResultActions doCreateOrder(List<Pair<ProductResponse, Integer>> lines) throws Exception {
