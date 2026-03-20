@@ -1,7 +1,14 @@
 package spring.orders.demo.orders.exceptions;
 
-public class EmptyProductsListException extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.BadRequestApiException;
 
-	private static final long serialVersionUID = 2220618196118050248L;
+public class EmptyProductsListException extends BadRequestApiException {
+
+	private static final long serialVersionUID = 1L;
+
+	public EmptyProductsListException() {
+		super(ApiErrors.EMPTY_PRODUCTS_LIST, MessageKeys.EMPTY_PRODUCTS_LIST);
+	}
 
 }

@@ -1,7 +1,14 @@
 package spring.orders.demo.users.exceptions;
 
-public class UnauthorizedOperationException extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.ForbiddenApiException;
 
-	private static final long serialVersionUID = -165768447360781007L;
+public class UnauthorizedOperationException extends ForbiddenApiException {
+
+	private static final long serialVersionUID = 1L;
+
+	public UnauthorizedOperationException() {
+		super(ApiErrors.UNAUTHORIZED_OPERATION, MessageKeys.UNAUTHORIZED_OPERATION);
+	}
 
 }

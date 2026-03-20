@@ -2,18 +2,15 @@ package spring.orders.demo.orders.exceptions;
 
 import java.util.UUID;
 
-public class OrderNotFoundException extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.NotFoundApiException;
 
-	private static final long serialVersionUID = -3069731091992631404L;
+public class OrderNotFoundException extends NotFoundApiException {
 
-	private final UUID externalId;
+	private static final long serialVersionUID = 1L;
 
 	public OrderNotFoundException(UUID externalId) {
-		this.externalId = externalId;
-	}
-
-	public UUID getExternalId() {
-		return externalId;
+		super(ApiErrors.ORDER_NOT_FOUND, MessageKeys.ORDER_NOT_FOUND, externalId);
 	}
 
 }

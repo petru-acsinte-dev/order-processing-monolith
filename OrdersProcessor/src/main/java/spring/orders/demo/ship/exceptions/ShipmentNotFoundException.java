@@ -2,18 +2,15 @@ package spring.orders.demo.ship.exceptions;
 
 import java.util.UUID;
 
-public class ShipmentNotFoundException extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.NotFoundApiException;
 
-	private static final long serialVersionUID = -6990899007786042942L;
+public class ShipmentNotFoundException extends NotFoundApiException {
 
-	private final UUID externalOrderId;
+	private static final long serialVersionUID = 1L;
 
 	public ShipmentNotFoundException(UUID externalOrderId) {
-		this.externalOrderId = externalOrderId;
-	}
-
-	public UUID getExternalOrderId() {
-		return externalOrderId;
+		super(ApiErrors.SHIPMENT_NOT_FOUND, MessageKeys.SHIPMENT_NOT_FOUND, externalOrderId);
 	}
 
 }

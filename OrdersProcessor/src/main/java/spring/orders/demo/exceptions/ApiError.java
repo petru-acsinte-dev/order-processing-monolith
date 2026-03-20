@@ -1,4 +1,4 @@
-package spring.orders.demo.users.exceptions;
+package spring.orders.demo.exceptions;
 
 import java.time.Instant;
 

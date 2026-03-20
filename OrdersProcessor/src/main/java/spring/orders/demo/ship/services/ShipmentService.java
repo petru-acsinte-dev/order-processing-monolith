@@ -98,7 +98,7 @@ public class ShipmentService {
 		}
 
 		final ShipStatus status = statusRepository.findByStatus(Status.SHIPPED.name())
-				.orElseThrow(ShippingStatusNotFoundException::new);
+				.orElseThrow(() -> new ShippingStatusNotFoundException(Status.SHIPPED.name()));
 
 		final Shipment newShipment = new Shipment();
 		newShipment.setExternalId(UUID.randomUUID());

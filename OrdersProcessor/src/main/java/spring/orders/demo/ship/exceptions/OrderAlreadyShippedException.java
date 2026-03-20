@@ -2,18 +2,15 @@ package spring.orders.demo.ship.exceptions;
 
 import java.util.UUID;
 
-public class OrderAlreadyShippedException extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.BadRequestApiException;
 
-	private static final long serialVersionUID = 5529164651824419061L;
+public class OrderAlreadyShippedException extends BadRequestApiException {
 
-	private final UUID orderExternalId;
+	private static final long serialVersionUID = 1L;
 
 	public OrderAlreadyShippedException(UUID orderExternalId) {
-		this.orderExternalId = orderExternalId;
-	}
-
-	public UUID getOrderExternalId() {
-		return orderExternalId;
+		super(ApiErrors.ORDER_ALREADY_SHIPPED, MessageKeys.ORDER_ALREADY_SHIPPED, orderExternalId);
 	}
 
 }

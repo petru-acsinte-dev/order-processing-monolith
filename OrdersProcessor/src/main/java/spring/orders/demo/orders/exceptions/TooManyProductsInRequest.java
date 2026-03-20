@@ -1,28 +1,14 @@
 package spring.orders.demo.orders.exceptions;
 
-public class TooManyProductsInRequest extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.BadRequestApiException;
 
-	private static final long serialVersionUID = -8082185862767178403L;
+public class TooManyProductsInRequest extends BadRequestApiException {
 
-	private final int systemMax;
-
-	private final int requestSize;
+	private static final long serialVersionUID = 1L;
 
 	public TooManyProductsInRequest(int systemMax, int requestSize) {
-		this.systemMax = systemMax;
-		this.requestSize = requestSize;
-	}
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
-
-	public int getSystemMax() {
-		return systemMax;
-	}
-
-	public int getRequestSize() {
-		return requestSize;
+		super(ApiErrors.REQUEST_TOO_BIG, MessageKeys.REQUEST_TOO_BIG, systemMax, requestSize);
 	}
 
 }

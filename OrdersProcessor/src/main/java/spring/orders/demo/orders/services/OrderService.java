@@ -103,7 +103,7 @@ public class OrderService {
 		// note: this might need to be paged if the possibility of having very large orders is real
 		final List<Product> products = findAllProducts(orderProducts.keySet(), orderProps.getQueryBatchSize());
 		if (orderProducts.size() != products.size()) {
-			throw new ProductNotFoundException("Not all the ordered products could be found");
+			throw new ProductNotFoundException();
 		}
 		log.debug("Creating new order for {} products", products.size()); //$NON-NLS-1$
 		final Order newOrder = createOrder(orderProducts, products);
@@ -129,7 +129,7 @@ public class OrderService {
 		if (!productsToUpsert.isEmpty()) {
 			products = findAllProducts(productsToUpsert.keySet(), orderProps.getQueryBatchSize());
 			if (productsToUpsert.size() != products.size()) {
-				throw new ProductNotFoundException("Not all the ordered products could be found");
+				throw new ProductNotFoundException();
 			}
 		}
 
@@ -342,8 +342,9 @@ public class OrderService {
 	}
 
 	private UUID getUserExternalId() {
-		final CustomerUser user = userRepository.findByUsername(SecurityUtils.getUsername())
-				.orElseThrow(UserNotFoundException::new);
+		final String username = SecurityUtils.getUsername();
+		final CustomerUser user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new UserNotFoundException(username));
 		return user.getExternalId();
 	}
 

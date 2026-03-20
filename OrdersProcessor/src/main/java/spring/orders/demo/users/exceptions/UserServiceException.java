@@ -1,11 +1,16 @@
 package spring.orders.demo.users.exceptions;
 
-public class UserServiceException extends RuntimeException {
+import org.springframework.http.HttpStatus;
 
-	private static final long serialVersionUID = -679530700364684956L;
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.ApiException;
 
-	public UserServiceException(String message) {
-		super(message);
+public class UserServiceException extends ApiException {
+
+	private static final long serialVersionUID = 1L;
+
+	public UserServiceException(Exception cause) {
+		super(HttpStatus.INTERNAL_SERVER_ERROR, ApiErrors.USER_SERVICE_ERROR, MessageKeys.USER_SERVICE_ERROR, cause.getMessage());
 	}
 
 }

@@ -1,7 +1,5 @@
 package spring.orders.demo.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -9,8 +7,6 @@ import spring.orders.demo.constants.Constants;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 
 public final class SecurityUtils {
-
-	private static Logger log = LoggerFactory.getLogger(SecurityUtils.class);
 
 	// this class should not be instantiated
 	private SecurityUtils() {}
@@ -41,7 +37,6 @@ public final class SecurityUtils {
 		if (SecurityUtils.hasRole(Constants.ADMIN_ROLE)) {
 			return;
 		}
-		log.warn("Forbidden: User {} is not an admin user", SecurityUtils.getUsername()); //$NON-NLS-1$
 		throw new UnauthorizedOperationException();
 	}
 

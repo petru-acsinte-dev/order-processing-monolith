@@ -25,10 +25,10 @@ import spring.orders.demo.users.entities.CustomerUser;
 import spring.orders.demo.users.entities.Role;
 import spring.orders.demo.users.entities.Status;
 import spring.orders.demo.users.exceptions.DuplicateUserException;
-import spring.orders.demo.users.exceptions.InvalidStatusException;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 import spring.orders.demo.users.exceptions.UserNotFoundException;
 import spring.orders.demo.users.exceptions.UserServiceException;
+import spring.orders.demo.users.exceptions.UserStatusNotFoundException;
 import spring.orders.demo.users.mappers.AddressMapper;
 import spring.orders.demo.users.mappers.CustomerUserMapper;
 import spring.orders.demo.users.repositories.CustomerUserRepository;
@@ -111,11 +111,9 @@ public class CustomerUserService {
 			newUser = userRepository.save(partialEntity);
 		} catch (final DataIntegrityViolationException ex) {
 			log.warn("{} encountered whilst creating user {}", ex.getClass().getCanonicalName(), newExternalId); //$NON-NLS-1$
-			throw new DuplicateUserException(String.format("User '%s' (%s) already exists",  //$NON-NLS-1$
-					partialEntity.getUsername(), partialEntity.getEmail()));
+			throw new DuplicateUserException(partialEntity.getUsername(), partialEntity.getEmail());
 		} catch (final Exception e) {
-			log.warn("{} encountered during user creation", e.getClass().getCanonicalName()); //$NON-NLS-1$
-			throw new UserServiceException("The user creation encountered an exception"); //$NON-NLS-1$
+			throw new UserServiceException(e);
 		}
 		log.info("User {} created successfully", newExternalId); //$NON-NLS-1$
 		return userMapper.toResponse(newUser);
@@ -130,7 +128,7 @@ public class CustomerUserService {
 		SecurityUtils.confirmAdminRole();
 
 		log.debug("updateUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
-		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
+		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(() -> new UserNotFoundException(externalId));
 		try {
 			if (null != userUpdateRequest.getEmail()) {
 				user.setEmail(userUpdateRequest.getEmail());
@@ -145,11 +143,9 @@ public class CustomerUserService {
 		} catch (final DataIntegrityViolationException ex) {
 			log.warn("{} encountered whilst updating user {}", //$NON-NLS-1$
 					ex.getClass().getCanonicalName(), user.getExternalId());
-			throw new DuplicateUserException(String.format("User '%s' (%s) already exists",  //$NON-NLS-1$
-					user.getUsername(), user.getEmail()));
+			throw new DuplicateUserException(user.getUsername(), user.getEmail());
 		} catch (final Exception e) {
-			log.warn("{} encountered during user updaate", e.getClass().getCanonicalName()); //$NON-NLS-1$
-			throw new UserServiceException("The user update encountered an exception"); //$NON-NLS-1$
+			throw new UserServiceException(e);
 		}
 	}
 
@@ -168,10 +164,11 @@ public class CustomerUserService {
 		}
 
 		log.debug("deleteUser(): Finding user with external id {}", externalId); //$NON-NLS-1$
-		final CustomerUser user = userRepository.findByExternalId(externalId).orElseThrow(UserNotFoundException::new);
+		final CustomerUser user = userRepository.findByExternalId(externalId)
+												.orElseThrow(() -> new UserNotFoundException(externalId));
 
 		final Status archivedStatus = statusRepository.findByStatus(UserStatus.ARCHIVED)
-				.orElseThrow(InvalidStatusException::new);
+				.orElseThrow(UserStatusNotFoundException::new);
 
 		log.debug("Deleting user {}", user.getId()); //$NON-NLS-1$
 		user.setStatus(archivedStatus);

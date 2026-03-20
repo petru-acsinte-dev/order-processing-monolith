@@ -2,23 +2,19 @@ package spring.orders.demo.orders.exceptions;
 
 import java.util.Currency;
 
-public class IncompatibleProductCurrencies extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.BadRequestApiException;
 
-	private static final long serialVersionUID = -1376679426785025421L;
-	private final Currency orderCurrency;
-	private final Currency productCurrency;
+public class IncompatibleProductCurrencies extends BadRequestApiException {
+
+	private static final long serialVersionUID = 1L;
 
 	public IncompatibleProductCurrencies(Currency orderCurrency, Currency productCurrency) {
-		this.orderCurrency = orderCurrency;
-		this.productCurrency = productCurrency;
-	}
-
-	public Currency getOrderCurrency() {
-		return orderCurrency;
-	}
-
-	public Currency getProductCurrency() {
-		return productCurrency;
+		super (	ApiErrors.INCOMPATIBLE_CURRENCIES,
+				MessageKeys.INCOMPATIBLE_CURRENCIES,
+				orderCurrency.getCurrencyCode(),
+				productCurrency.getCurrencyCode()
+		);
 	}
 
 }

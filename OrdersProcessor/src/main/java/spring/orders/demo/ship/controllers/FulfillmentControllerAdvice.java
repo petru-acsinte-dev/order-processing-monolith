@@ -1,27 +1,37 @@
 package spring.orders.demo.ship.controllers;
 
-import org.springframework.http.HttpStatus;
+import java.util.Locale;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import spring.orders.demo.ship.exceptions.BadExistingFulfillmentStatusException;
-import spring.orders.demo.ship.exceptions.FulfillmentNotFoundException;
-import spring.orders.demo.users.exceptions.ApiError;
-import spring.orders.demo.users.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.ApiError;
+import spring.orders.demo.exceptions.ApiException;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "spring.orders.demo.ship")
 public class FulfillmentControllerAdvice {
 
-	@ExceptionHandler(FulfillmentNotFoundException.class)
-	@ResponseStatus(HttpStatus.NOT_FOUND)
-	public ApiError handleFulfillmentNotFound(FulfillmentNotFoundException nf) {
-		return new ApiError(ApiErrors.FULFILLMENT_NOT_FOUND, nf.getOrderExternalId().toString());
+	private final MessageSource messageSource;
+
+	public FulfillmentControllerAdvice(MessageSource messageSource) {
+		this.messageSource = messageSource;
 	}
 
-	@ExceptionHandler(BadExistingFulfillmentStatusException.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ApiError handleFulfillmentNotFound(BadExistingFulfillmentStatusException bad) {
-		return new ApiError(ApiErrors.FULFILLMENT_NOT_FOUND, bad.getOrderExternalId().toString());
+	@ExceptionHandler(ApiException.class)
+	public ResponseEntity<ApiError> handleApiException(ApiException ex, Locale locale) {
+		final String message = messageSource.getMessage(
+                ex.getMessageKey(),
+                ex.getArgs(),
+                locale
+        );
+
+		final ApiError error = new ApiError(ex.getErrorCode(), message);
+
+		return ResponseEntity
+				.status(ex.getStatus())
+				.body(error);
 	}
+
 }

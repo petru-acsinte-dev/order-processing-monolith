@@ -2,18 +2,15 @@ package spring.orders.demo.ship.exceptions;
 
 import java.util.UUID;
 
-public class FulfillmentNotFoundException extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.NotFoundApiException;
 
-	private static final long serialVersionUID = 1321425628607242006L;
+public class FulfillmentNotFoundException extends NotFoundApiException {
 
-	private final UUID orderExternalId;
+	private static final long serialVersionUID = 1L;
 
 	public FulfillmentNotFoundException(UUID orderExternalId) {
-		this.orderExternalId = orderExternalId;
-	}
-
-	public UUID getOrderExternalId() {
-		return orderExternalId;
+		super(ApiErrors.FULFILLMENT_NOT_FOUND, MessageKeys.FULFILLMENT_NOT_FOUND, orderExternalId);
 	}
 
 }

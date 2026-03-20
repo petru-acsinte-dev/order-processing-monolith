@@ -1,4 +1,4 @@
-package spring.orders.demo.users.exceptions;
+package spring.orders.demo.exceptions;
 
 public enum ApiErrors {
 
@@ -12,6 +12,13 @@ public enum ApiErrors {
 	USER_NOT_FOUND,
 	USER_SERVICE_ERROR,
 	ORDER_STATUS_DOES_NOT_ALLOW_OP,
-	FULFILLMENT_NOT_FOUND
+	FULFILLMENT_NOT_FOUND,
+	USER_STATUS_NOT_FOUND,
+	EMPTY_PRODUCTS_LIST,
+	ORDER_NOT_FOUND,
+	BAD_EXISTING_FULFILLMENT_STATUS,
+	ORDER_ALREADY_SHIPPED,
+	SHIPMENT_NOT_FOUND,
+	SHIPMENT_STATUS_NOT_FOUND
 
 }

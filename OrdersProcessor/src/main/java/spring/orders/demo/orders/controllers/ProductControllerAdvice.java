@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import spring.orders.demo.exceptions.ApiError;
+import spring.orders.demo.exceptions.ApiErrors;
 import spring.orders.demo.orders.exceptions.ProductNotFoundException;
-import spring.orders.demo.users.exceptions.ApiError;
-import spring.orders.demo.users.exceptions.ApiErrors;
 
 @RestControllerAdvice
 public class ProductControllerAdvice {

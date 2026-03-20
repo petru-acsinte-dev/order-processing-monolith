@@ -1,49 +1,36 @@
 package spring.orders.demo.orders.controllers;
 
-import org.springframework.http.HttpStatus;
+import java.util.Locale;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import spring.orders.demo.orders.exceptions.EmptyProductsListException;
-import spring.orders.demo.orders.exceptions.IncompatibleProductCurrencies;
-import spring.orders.demo.orders.exceptions.OrderCannotBeModifiedException;
-import spring.orders.demo.orders.exceptions.TooManyProductsInRequest;
-import spring.orders.demo.users.exceptions.ApiError;
-import spring.orders.demo.users.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.ApiError;
+import spring.orders.demo.exceptions.ApiException;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "spring.orders.demo.orders")
 public class OrderControllerAdvice {
 
-	@ExceptionHandler(EmptyProductsListException.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ApiError handleEmptyListOnCreate(EmptyProductsListException empty) {
-		return new ApiError(ApiErrors.INCORRECT_INPUT, "The products list cannot be empty");
+	private final MessageSource messageSource;
+
+	public OrderControllerAdvice(MessageSource messageSource) {
+		this.messageSource = messageSource;
 	}
 
-	@ExceptionHandler(IncompatibleProductCurrencies.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ApiError handleIncompatibleCurrencies(IncompatibleProductCurrencies ex) {
-		return new ApiError(ApiErrors.INCOMPATIBLE_CURRENCIES,
-				String.format("%s and %s currencies are not compatible",
-						ex.getOrderCurrency().getDisplayName(),
-						ex.getProductCurrency().getDisplayName()));
-	}
+	@ExceptionHandler(ApiException.class)
+	public ResponseEntity<ApiError> handleApiException(ApiException ex, Locale locale) {
+		final String message = messageSource.getMessage(
+                ex.getMessageKey(),
+                ex.getArgs(),
+                locale
+        );
 
-	@ExceptionHandler(TooManyProductsInRequest.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ApiError handleRequestTooBig(TooManyProductsInRequest tooBig) {
-		return new ApiError(ApiErrors.REQUEST_TOO_BIG,
-				String.format("Request size %s exceed %s limit",
-						tooBig.getRequestSize(),
-						tooBig.getSystemMax()));
-	}
+		final ApiError error = new ApiError(ex.getErrorCode(), message);
 
-	@ExceptionHandler(OrderCannotBeModifiedException.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ApiError handleOrderCannotBeModified(OrderCannotBeModifiedException dont) {
-		return new ApiError(ApiErrors.ORDER_STATUS_DOES_NOT_ALLOW_OP,
-				String.format("Order %s is %s", dont.getExternalId(), dont.getOrderStatus()));
+		return ResponseEntity
+				.status(ex.getStatus())
+				.body(error);
 	}
-
 }

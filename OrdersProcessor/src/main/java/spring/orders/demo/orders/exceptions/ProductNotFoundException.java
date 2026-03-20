@@ -1,14 +1,14 @@
 package spring.orders.demo.orders.exceptions;
 
-public class ProductNotFoundException extends RuntimeException {
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.NotFoundApiException;
 
-	private static final long serialVersionUID = -1426307569738958672L;
+public class ProductNotFoundException extends NotFoundApiException {
+
+	private static final long serialVersionUID = 1L;
 
 	public ProductNotFoundException() {
-	}
-
-	public ProductNotFoundException(String message) {
-		super(message);
+		super(ApiErrors.PRODUCT_NOT_FOUND, MessageKeys.PRODUCT_NOT_FOUND);
 	}
 
 }

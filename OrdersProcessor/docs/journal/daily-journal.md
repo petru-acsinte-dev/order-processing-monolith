@@ -150,4 +150,5 @@ OrderProcessor - Daily journal
 2026-03-20
 -
 - debugged and fixed a problem with ShipProps not loading properly; switched prop names to kebab style
-- 
+- exceptions refactoring and error messages internationalization
+

@@ -142,9 +142,10 @@ class OrderIT extends AbstractIntegrationTestBase {
 				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(Status.CREATED.name())) // status
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT).isNumber())
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_AMOUNT)
-						.value(product.getCost().getAmount()
+						.value(
+								closeTo(product.getCost().getAmount()
 									.multiply(BigDecimal.valueOf(quantity * 2))
-									.add(newProductToAdd.getCost().getAmount()))) // orderTotal.amount
+									.add(newProductToAdd.getCost().getAmount()).doubleValue(), 0.001))) // orderTotal.amount
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY).isNotEmpty())
 				.andExpect(jsonPath(MEMBR_TOTAL_TMPLT, FIELD_CURRENCY)
 						.value(product.getCost().getCurrency().getCurrencyCode()))

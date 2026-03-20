@@ -1,13 +1,14 @@
 package spring.orders.demo.orders.exceptions;
 
-import jakarta.validation.constraints.NotBlank;
+import spring.orders.demo.exceptions.ApiErrors;
+import spring.orders.demo.exceptions.BadRequestApiException;
 
-public class NonMatchingCurrencyException extends RuntimeException {
+public class NonMatchingCurrencyException extends BadRequestApiException {
 
-	public NonMatchingCurrencyException(@NotBlank String expected, @NotBlank String actual) {
-		super(String.format("%s does not match expected %s currency", actual, expected)); //$NON-NLS-1$
+	private static final long serialVersionUID = 1L;
+
+	public NonMatchingCurrencyException(String expected, String actual) {
+		super(ApiErrors.INCOMPATIBLE_CURRENCIES, MessageKeys.INCOMPATIBLE_CURRENCIES, expected, actual);
 	}
-
-	private static final long serialVersionUID = 4296762256913171430L;
 
 }
