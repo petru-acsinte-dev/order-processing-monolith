@@ -10,49 +10,44 @@
     "description": "The JWT expiration period"
   },
   {
-    "name": "orders.demo.orders.pageSize",
+    "name": "orders.demo.orders.page-size",
     "type": "java.lang.Integer",
     "description": "The page size for listing products, orders, order lines"
   },
   {
-    "name": "orders.demo.users.maxPageSize",
+    "name": "orders.demo.users.max-page-size",
     "type": "java.lang.Integer",
     "description": "Maximum page size for request (will not overwrite system hard limit of 10_000)"
   },
   {
-    "name": "orders.demo.users.defaultSortAttribute",
+    "name": "orders.demo.users.default-sort-attribute",
     "type": "java.lang.String",
     "description": "The default user attribute to sort by"
   },
   {
-    "name": "orders.demo.users.pageSize",
+    "name": "orders.demo.users.page-size",
     "type": "java.lang.Integer",
     "description": "The page size for listing users"
   },
   {
-    "name": "orders.demo.orders.maxPageSize",
+    "name": "orders.demo.orders.max-page-size",
     "type": "java.lang.Integer",
     "description": "Maximum page size for request (will not overwrite system hard limit of 10_000)"
   },
   {
-    "name": "orders.demo.orders.productsDefaultSortingAttribute",
+    "name": "orders.demo.orders.products-default-sorting-attribute",
     "type": "java.lang.String",
     "description": "The default product attribute to sort by"
   },
   {
-    "name": "orders.demo.orders.queryBatchSize",
+    "name": "orders.demo.orders.query-batch-size",
     "type": "java.lang.Integer",
     "description": "List size for querying products"
   },
   {
-    "name": "orders.demo.orders.queryMaxSize",
+    "name": "orders.demo.orders.query-max-size",
     "type": "java.lang.Integer",
     "description": "Max size of a products list to query for"
-  },
-  {
-    "name": "orders.demo.ship.pageSize",
-    "type": "java.lang.Integer",
-    "description": "The page size for listing fulfilments"
   },
   {
     "name": "orders.demo.ship.maxPageSize",
@@ -60,13 +55,23 @@
     "description": "Maximum page size for request (will not overwrite system hard limit of 10_000)"
   },
   {
-    "name": "orders.demo.ship.shipmentSortingAttribute",
-    "type": "java.lang.String",
-    "description": "A description for 'orders.demo.ship.shipmentSortingAttribute'"
+    "name": "orders.demo.ship.page-size",
+    "type": "java.lang.Integer",
+    "description": "The page size for listing fulfillments, shipments"
   },
   {
-    "name": "orders.demo.ship.fulfillmentSortingAttribute",
+    "name": "orders.demo.ship.fulfillment-sorting-attribute",
     "type": "java.lang.String",
-    "description": "The default attribute to sort by"
+    "description": "The default attribute to sort the results by"
+  }
+]}{
+    "name": "orders.demo.ship.shipment-sorting-attribute",
+    "type": "java.lang.String",
+    "description": "The default attribute to sort the results by"
+  }
+]}{
+    "name": "orders.demo.ship.max-page-size",
+    "type": "java.lang.Integer",
+    "description": "Maximum page size for request (will not overwrite system hard limit of 10_000)"
   }
 ]}

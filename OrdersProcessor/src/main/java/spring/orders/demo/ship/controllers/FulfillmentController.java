@@ -63,8 +63,7 @@ public class FulfillmentController {
 			content = @Content(schema = @Schema(hidden = true)))
 	@GetMapping("/{orderId}")
 	public ResponseEntity<FulfillmentResponse> getFulfillment(
-			@PathVariable UUID orderId,
-			Pageable pageable) {
+			@PathVariable UUID orderId) {
 		SecurityUtils.confirmAdminRole();
 
 		final FulfillmentResponse fulfillment = service.getOrderFulfillment(orderId);

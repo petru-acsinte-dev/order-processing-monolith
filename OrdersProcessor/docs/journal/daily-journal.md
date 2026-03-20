@@ -146,3 +146,8 @@ OrderProcessor - Daily journal
 2026-03-18
 -
 - created fulfillment controller and fulfillment integration tests
+
+2026-03-20
+-
+- debugged and fixed a problem with ShipProps not loading properly; switched prop names to kebab style
+- 

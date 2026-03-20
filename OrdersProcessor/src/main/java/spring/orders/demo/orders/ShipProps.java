@@ -2,13 +2,19 @@ package spring.orders.demo.orders;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+
+import jakarta.validation.constraints.Positive;
 
 @Component
 @ConfigurationProperties(prefix = "orders.demo.ship")
+@Validated
 public class ShipProps {
 
+	@Positive
 	private int pageSize;
 
+	@Positive
 	private int maxPageSize;
 
 	private String shipmentSortingAttribute;
