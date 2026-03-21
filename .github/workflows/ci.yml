@@ -32,6 +32,13 @@ jobs:
           path: |
             OrdersProcessor/target/surefire-reports
             OrdersProcessor/target/failsafe-reports
+
+      - name: Upload JaCoCo coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: OrdersProcessor/target/site/jacoco/
+
       - name: Build Docker image
         working-directory: OrdersProcessor   # correct path to Dockerfile
         run: docker build -t ghcr.io/${{ github.repository_owner }}/order-processor:latest .

@@ -185,6 +185,57 @@
                 </execution>
             </executions>
         </plugin>
+		
+		<plugin>
+			<groupId>org.jacoco</groupId>
+			<artifactId>jacoco-maven-plugin</artifactId>
+			<executions>
+				<!-- Unit test coverage -->
+				<execution>
+					<id>prepare-agent</id>
+					<goals><goal>prepare-agent</goal></goals>
+					<configuration>
+						<destFile>${project.build.directory}/jacoco-ut.exec</destFile>
+					</configuration>
+				</execution>
+				<!-- IT coverage -->
+				<execution>
+					<id>prepare-agent-integration</id>
+					<goals><goal>prepare-agent-integration</goal></goals>
+					<configuration>
+						<destFile>${project.build.directory}/jacoco-it.exec</destFile>
+					</configuration>
+				</execution>
+				<!-- Merge both into one .exec file -->
+				<execution>
+					<id>merge</id>
+					<phase>post-integration-test</phase>
+					<goals><goal>merge</goal></goals>
+					<configuration>
+						<fileSets>
+							<fileSet>
+								<directory>${project.build.directory}</directory>
+								<includes>
+									<include>jacoco-ut.exec</include>
+									<include>jacoco-it.exec</include>
+								</includes>
+							</fileSet>
+						</fileSets>
+						<destFile>${project.build.directory}/jacoco-merged.exec</destFile>
+					</configuration>
+				</execution>
+				<!-- Generate report from merged file -->
+				<execution>
+					<id>report</id>
+					<phase>verify</phase>
+					<goals><goal>report</goal></goals>
+					<configuration>
+						<dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+
 		</plugins>
 	</build>
 
