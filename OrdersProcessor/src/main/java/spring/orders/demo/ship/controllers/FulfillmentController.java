@@ -26,7 +26,7 @@ import spring.orders.demo.ship.services.FulfillmentService;
 
 @Tag (name = "Fulfillments controller", description = "Operations related to order fulfillments")
 @RestController
-@RequestMapping(Constants.FULFILLMENTS_PATH)
+@RequestMapping(path = Constants.FULFILLMENTS_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
 public class FulfillmentController {
 
 	private final FulfillmentService service;
@@ -35,6 +35,7 @@ public class FulfillmentController {
 		this.service = service;
 	}
 
+	@GetMapping
 	@Operation (summary = "Lists fulfillments",
 			description = "Lists available fulfillments, newest first. Requires admin priviledges.")
 	@ApiResponse(responseCode = "200",
@@ -43,13 +44,13 @@ public class FulfillmentController {
 	@ApiResponse (responseCode = "403",
 			description = "User does not have the required priviledges",
 			content = @Content(schema = @Schema(hidden = true)))
-	@GetMapping
 	public Page<FulfillmentResponse> getFulfillments(Pageable pageable) {
 		SecurityUtils.confirmAdminRole();
 
 		return service.getFulfillments(pageable);
 	}
 
+	@GetMapping("/{orderId}")
 	@Operation (summary = "Returns fulfillment for an order",
 			description = "Lists available fulfillments, newest first. Requires admin priviledges.")
 	@ApiResponse(responseCode = "200",
@@ -61,7 +62,6 @@ public class FulfillmentController {
 	@ApiResponse (responseCode = "404",
 			description = "The specified order does not have a fulfillment",
 			content = @Content(schema = @Schema(hidden = true)))
-	@GetMapping("/{orderId}")
 	public ResponseEntity<FulfillmentResponse> getFulfillment(
 			@PathVariable UUID orderId) {
 		SecurityUtils.confirmAdminRole();
@@ -71,6 +71,7 @@ public class FulfillmentController {
 		return ResponseEntity.ok(fulfillment);
 	}
 
+	@PostMapping(path = "/{orderId}/ship")
 	@Operation (summary = "Marks an order fulfillment as shipped",
 			description = "Marks an existing order fulfillment as shipped. Requires admin priviledges.")
 	@ApiResponse(responseCode = "200",
@@ -82,7 +83,6 @@ public class FulfillmentController {
 	@ApiResponse (responseCode = "404",
 			description = "Order not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@PostMapping("/{orderId}/ship")
 	public ResponseEntity<FulfillmentResponse> shipOrder(@PathVariable UUID orderId) {
 		SecurityUtils.confirmAdminRole();
 

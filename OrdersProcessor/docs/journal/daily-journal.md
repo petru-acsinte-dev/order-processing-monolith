@@ -152,3 +152,7 @@ OrderProcessor - Daily journal
 - debugged and fixed a problem with ShipProps not loading properly; switched prop names to kebab style
 - exceptions refactoring and error messages internationalization
 
+2026-03-21
+-
+- enabling JaCoCo
+- tidying up controllers API spec

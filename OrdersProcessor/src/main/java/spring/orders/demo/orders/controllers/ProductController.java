@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +35,7 @@ import spring.orders.demo.orders.services.ProductService;
 
 @Tag (name = "Products controller", description = "Operations related to products management")
 @RestController
-@RequestMapping(Constants.PRODUCTS_PATH)
+@RequestMapping(path = Constants.PRODUCTS_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
 public class ProductController {
 
 	private final ProductService service;
@@ -42,6 +44,7 @@ public class ProductController {
 		this.service = service;
 	}
 
+	@GetMapping
 	@Operation (summary = "Lists products",
 			description = "Lists products present in the system.")
 	@ApiResponse(responseCode = "200",
@@ -53,11 +56,12 @@ public class ProductController {
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
-	@GetMapping
 	public Page<ProductResponse> getAvailableProducts(Pageable pageable) {
 		return service.getProducts(pageable);
 	}
 
+	@PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	@Operation (summary = "Updates a product",
 				description = "Admin operation which updates a product present in the system.")
 	@ApiResponse(responseCode = "200",
@@ -72,14 +76,15 @@ public class ProductController {
 	@ApiResponse (responseCode = "404",
 		description = "Product not found",
 		content = @Content(schema = @Schema(hidden = true)))
-	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
-	@PatchMapping
 	public ProductResponse updateProduct(@RequestParam(required = true) @NotBlank String externalId,
 				@Valid @RequestBody UpdateProductRequest updateRequest) {
 		final UUID uuid = UUID.fromString(externalId);
 		return service.updateProduct(uuid, updateRequest);
 	}
 
+	@DeleteMapping(produces = {})
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	@Operation (summary = "Marks a product as inactive",
 		description = "Admin operation which archives a product present in the system.")
 	@ApiResponse(responseCode = "204",
@@ -94,8 +99,6 @@ public class ProductController {
 	@ApiResponse (responseCode = "404",
 		description = "Product not found",
 		content = @Content(schema = @Schema(hidden = true)))
-	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
-	@DeleteMapping
 	public ResponseEntity<ProductResponse> deleteProduct(@RequestParam(required = true) @NotBlank String externalId) {
 		final UUID uuid = UUID.fromString(externalId);
 		service.deleteProduct(uuid);
@@ -104,6 +107,8 @@ public class ProductController {
 				.build();
 	}
 
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseStatus(HttpStatus.CREATED)
 	@Operation (summary = "Creates a product",
 			description = "Admin operation which creates a product in the system.")
 	@ApiResponse(responseCode = "201",
@@ -118,7 +123,6 @@ public class ProductController {
 	@ApiResponse (responseCode = "404",
 			description = "Product not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@PostMapping
 	public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest createRequest) {
 		final ProductResponse newProduct = service.createProduct(createRequest);
 		return ResponseEntity

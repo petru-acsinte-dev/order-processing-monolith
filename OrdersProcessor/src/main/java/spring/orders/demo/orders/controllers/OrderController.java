@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +33,7 @@ import spring.orders.demo.orders.dto.UpdateOrderRequest;
 import spring.orders.demo.orders.services.OrderService;
 
 @RestController
-@RequestMapping(Constants.ORDERS_PATH)
+@RequestMapping(path = Constants.ORDERS_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
 public class OrderController {
 
 	private final OrderService service;
@@ -40,6 +42,8 @@ public class OrderController {
 		this.service = service;
 	}
 
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseStatus(HttpStatus.CREATED)
 	@Operation (summary = "Creates an order",
 			description = "Creates an order in the system containing the submitted products and quantities.")
 	@ApiResponse(responseCode = "201",
@@ -51,7 +55,6 @@ public class OrderController {
 	@ApiResponse (responseCode = "404",
 			description = "Product not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@PostMapping
 	public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest createRequest) {
 		final OrderResponse newOrder = service.createOrder(createRequest);
 		return ResponseEntity
@@ -60,6 +63,7 @@ public class OrderController {
 				.body(newOrder);
 	}
 
+	@PatchMapping(path = "/{orderId}", consumes = MediaType.APPLICATION_JSON_VALUE)
 	@Operation (summary = "Updates an order",
 			description = "Adds, removes and changes product quantities in an existing order.")
 	@ApiResponse(responseCode = "200",
@@ -71,7 +75,6 @@ public class OrderController {
 	@ApiResponse (responseCode = "404",
 			description = "Order not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@PatchMapping("/{orderId}")
 	public ResponseEntity<OrderResponse> updateOrder(
 			@PathVariable UUID orderId,
 			@Valid @RequestBody UpdateOrderRequest updateRequest) {
@@ -80,6 +83,7 @@ public class OrderController {
 				.ok(changedOrder);
 	}
 
+	@PostMapping("/{orderId}/cancel")
 	@Operation (summary = "Cancels an order",
 			description = "Cancels an existing order.")
 	@ApiResponse(responseCode = "200",
@@ -91,12 +95,12 @@ public class OrderController {
 	@ApiResponse (responseCode = "404",
 			description = "Order not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@PostMapping("/{orderId}/cancel")
 	public ResponseEntity<OrderInfo> cancelOrder(@PathVariable UUID orderId) {
 		final OrderInfo updatedOrder = service.updateOrder(orderId, Status.CANCELLED);
 		return ResponseEntity.ok(updatedOrder);
 	}
 
+	@PostMapping("/{orderId}/confirm")
 	@Operation (summary = "Confirms an order",
 			description = "Confirms an existing draft order.")
 	@ApiResponse(responseCode = "200",
@@ -108,12 +112,12 @@ public class OrderController {
 	@ApiResponse (responseCode = "404",
 			description = "Order not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@PostMapping("/{orderId}/confirm")
 	public ResponseEntity<OrderInfo> confirmOrder(@PathVariable UUID orderId) {
 		final OrderInfo updatedOrder = service.updateOrder(orderId, Status.CONFIRMED);
 		return ResponseEntity.ok(updatedOrder);
 	}
 
+	@PostMapping("/{orderId}/ship")
 	@Operation (summary = "Marks an order as shipped",
 			description = "Marks an existing order as shipped.")
 	@ApiResponse(responseCode = "200",
@@ -125,12 +129,12 @@ public class OrderController {
 	@ApiResponse (responseCode = "404",
 			description = "Order not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@PostMapping("/{orderId}/ship")
 	public ResponseEntity<OrderInfo> shipOrder(@PathVariable UUID orderId) {
 		final OrderInfo updatedOrder = service.updateOrder(orderId, Status.SHIPPED);
 		return ResponseEntity.ok(updatedOrder);
 	}
 
+	@GetMapping("/{orderId}")
 	@Operation (summary = "Retrieves an order",
 			description = "Retrieves an order and its contents.")
 	@ApiResponse(responseCode = "200",
@@ -142,12 +146,12 @@ public class OrderController {
 	@ApiResponse (responseCode = "404",
 			description = "Order not found",
 			content = @Content(schema = @Schema(hidden = true)))
-	@GetMapping("/{orderId}")
 	public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID orderId) {
 		final OrderResponse order = service.getOrder(orderId);
 		return ResponseEntity.ok(order);
 	}
 
+	@GetMapping
 	@Operation (summary = "Lists orders",
 				description = "Lists available orders, newest first")
 	@ApiResponse(responseCode = "200",
@@ -159,7 +163,6 @@ public class OrderController {
 	@ApiResponse (responseCode = "404",
 				description = "The specified optional owner was not found",
 				content = @Content(schema = @Schema(hidden = true)))
-	@GetMapping
 	public Page<OrderInfo> getOrders(
 			@RequestParam(required = false) UUID ownerId,
 			Pageable pageable) {

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,7 +39,7 @@ import spring.orders.demo.users.services.CustomerUserService;
 
 @Tag (name = "Users controller", description = "Operations related to users management")
 @RestController
-@RequestMapping(Constants.USERS_PATH)
+@RequestMapping(path = Constants.USERS_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
 public class CustomUserController {
 
 	private final CustomerUserService service;
@@ -68,10 +69,11 @@ public class CustomUserController {
 	public ResponseEntity<Page<CustomerUserResponse>> getUsers(@ParameterObject Pageable pageable) {
 		final Page<CustomerUserResponse> page = service.findUsers(pageable);
 
-		return getResponse(page);
+		return getPagedResponse(page);
 	}
 
-	@PostMapping
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseStatus(HttpStatus.CREATED)
 	@Operation (summary = "Creates a new user",
 				description = "Creates a new user. Requires admin priviledges.")
 	@ApiResponse (responseCode = "201",
@@ -92,7 +94,8 @@ public class CustomUserController {
 			.body(newUser);
 	}
 
-	@PatchMapping
+	@PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	@Operation(summary = "Updates an existing user",
 			description = "Updates the email and/or address for an existing user. Requires admin priviledges.")
 	@ApiResponse (responseCode = "200",
@@ -105,7 +108,6 @@ public class CustomUserController {
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
-	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	public ResponseEntity<CustomerUserResponse> updateUser(
 			@RequestParam (required = true) String externalId,
 			@Valid @RequestBody UpdateCustomerUserRequest updateRequest) {
@@ -115,7 +117,9 @@ public class CustomUserController {
 			.ok(updatedUser);
 	}
 
-	@DeleteMapping
+	@DeleteMapping(produces = {})
+	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
+	@ResponseStatus(HttpStatus.NO_CONTENT)
 	@Operation(summary = "Archives an existing user",
 				description = "Archives an existing user. Requires admin priviledges.")
 	@ApiResponse (responseCode = "204",
@@ -127,7 +131,6 @@ public class CustomUserController {
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
-	@Parameter(name = Constants.PARAM_EXTERNAL_ID, required = true)
 	public ResponseEntity<CustomerUserResponse> deleteUser(
 			@RequestParam (required = true) String externalId) {
 		final UUID external = UUID.fromString(externalId);
@@ -137,7 +140,7 @@ public class CustomUserController {
 			.build();
 	}
 
-	private static ResponseEntity<Page<CustomerUserResponse>> getResponse(Page<CustomerUserResponse> page) {
+	private static ResponseEntity<Page<CustomerUserResponse>> getPagedResponse(Page<CustomerUserResponse> page) {
 		final Sort sortBy = page.getSort();
 		final String nextLink = (page.hasNext()) ?
 				buildLink(page.getNumber() + 1, page.getSize(), sortBy) : null;
