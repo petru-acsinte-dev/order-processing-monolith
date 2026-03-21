@@ -41,6 +41,7 @@ import spring.orders.demo.orders.dto.OrderResponse;
 import spring.orders.demo.orders.dto.ProductResponse;
 import spring.orders.demo.shared.AbstractIntegrationTestBase;
 import spring.orders.demo.ship.dto.FulfillmentResponse;
+import spring.orders.demo.ship.dto.ShipmentResponse;
 
 @Transactional
 class FulfillmentIT extends AbstractIntegrationTestBase {
@@ -125,16 +126,19 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 
 		loginAs(Constants.ADMIN, Constants.ADMIN);
 
-		shipOrder(Constants.FULFILLMENTS_PATH + '/' + orderId);
+		shipOrder(Constants.FULFILLMENTS_PATH + '/' + orderId, false);
+
+		// shipping again should fail
+		shipOrder(Constants.FULFILLMENTS_PATH + '/' + orderId, true);
 
 		expectedStatus = Status.SHIPPED;
 
 	}
 
 	@Test
-	@DisplayName("Retrieves all available fulfillment")
+	@DisplayName("Retrieves all available fulfillments and shipments")
 	@Rollback
-	void testGetAllFulfillments() throws Exception {
+	void testGetAllFulfillmentsAndShipments() throws Exception {
 		// selecting a random product
 		final List<ProductResponse> products = getProducts();
 		final Random random = new Random();
@@ -167,6 +171,20 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		confirmOrder(order2Location);
 
 		checkFulfillments(Status.READY_TO_SHIP, List.of(order1Id, order2Id));
+
+		shipOrder(Constants.FULFILLMENTS_PATH + '/' + order1Id, false);
+
+		shipOrder(Constants.FULFILLMENTS_PATH + '/' + order2Id, false);
+
+		checkShipments(Status.SHIPPED, List.of(order1Id, order2Id));
+
+		assertEquals(HttpStatus.OK.value(), checkFulfillment(order1Id, ORDER_STATUS_SHIPPED));
+
+		assertEquals(HttpStatus.OK.value(), checkFulfillment(order2Id, ORDER_STATUS_SHIPPED));
+
+		assertEquals(HttpStatus.OK.value(), checkShipment(order1Id, ORDER_STATUS_SHIPPED));
+
+		assertEquals(HttpStatus.OK.value(), checkShipment(order2Id, ORDER_STATUS_SHIPPED));
 	}
 
 	// this needs to happen after the test or else events don't take effect
@@ -209,8 +227,43 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		}
 	}
 
+	private void checkShipments(Status expectedStatus, List<UUID> orderExternalIds) throws Exception {
+
+		loginAs(Constants.ADMIN, Constants.ADMIN);
+
+		final MvcResult actions = mockMvc.perform(get(Constants.SHIPMENTS_PATH)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer()))
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR).isArray()) //$NON-NLS-1$
+			.andExpect(jsonPath("$." + Constants.PAGE_CONTENT_ATTR + ".length()").value(2)) //$NON-NLS-1$ //$NON-NLS-2$
+			.andReturn();
+
+		final JsonNode root = objectMapper.readTree(actions.getResponse().getContentAsString());
+		final JsonNode contentNode = root.get(Constants.PAGE_CONTENT_ATTR);
+		final List<ShipmentResponse> contents =
+				objectMapper.convertValue(contentNode, new TypeReference<List<ShipmentResponse>>() {});
+
+		for (final ShipmentResponse fulfillment : contents) {
+			assertEquals(expectedStatus.name(), fulfillment.getStatus());
+			assertTrue(orderExternalIds.contains(fulfillment.getOrderExternalId()));
+		}
+	}
+
 	private int checkFulfillment(UUID orderExternalId, String expectedStatus) throws Exception {
 		return mockMvc.perform(get(Constants.FULFILLMENTS_PATH + '/' + orderExternalId)
+				.accept(MediaType.APPLICATION_JSON)
+				.header(HttpHeaders.AUTHORIZATION, getBearer()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(expectedStatus))
+			.andReturn()
+			.getResponse()
+			.getStatus();
+	}
+
+	private int checkShipment(UUID orderExternalId, String expectedStatus) throws Exception {
+		return mockMvc.perform(get(Constants.SHIPMENTS_PATH + '/' + orderExternalId)
 				.accept(MediaType.APPLICATION_JSON)
 				.header(HttpHeaders.AUTHORIZATION, getBearer()))
 			.andExpect(status().isOk())
@@ -232,10 +285,15 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(ORDER_STATUS_CONFIRMED));
 	}
 
-	private void shipOrder(String fulfillmentLocation) throws Exception {
-		updateStatus(fulfillmentLocation, "/ship") //$NON-NLS-1$
-			.andExpect(status().isOk())
-			.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(ORDER_STATUS_SHIPPED));
+	private void shipOrder(String fulfillmentLocation, boolean expectBadRequest) throws Exception {
+		final ResultActions actions = updateStatus(fulfillmentLocation, "/ship"); //$NON-NLS-1$
+		if (expectBadRequest) {
+			actions.andExpect(status().isBadRequest());
+		} else {
+			actions
+				.andExpect(status().isOk())
+				.andExpect(jsonPath(MEMBR_TMPLT, FIELD_STATUS).value(ORDER_STATUS_SHIPPED));
+		}
 	}
 
 	private ResultActions doCreateOrder(List<Pair<ProductResponse, Integer>> lines) throws Exception {

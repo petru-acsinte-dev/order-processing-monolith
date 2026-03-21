@@ -52,7 +52,7 @@ public class FulfillmentController {
 
 	@GetMapping("/{orderId}")
 	@Operation (summary = "Returns fulfillment for an order",
-			description = "Lists available fulfillments, newest first. Requires admin priviledges.")
+			description = "Returns fulfillment information for the specified order. Requires admin priviledges.")
 	@ApiResponse(responseCode = "200",
 			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
 					array = @ArraySchema(schema = @Schema(implementation = FulfillmentResponse.class))))
