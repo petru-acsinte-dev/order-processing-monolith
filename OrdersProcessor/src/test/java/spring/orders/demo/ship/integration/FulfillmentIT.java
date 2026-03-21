@@ -1,4 +1,4 @@
-package spring.orders.demo.orders.integration;
+package spring.orders.demo.ship.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,6 +47,8 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 
 	private static Logger log = LoggerFactory.getLogger(FulfillmentIT.class);
 
+	private static final int PAGE_SIZE = 50;
+
 	private static final String MEMBR_TMPLT = "$.%s"; //$NON-NLS-1$
 	private static final String FIELD_STATUS = "status"; //$NON-NLS-1$
 
@@ -79,7 +81,7 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		// selecting a random product
 		final List<ProductResponse> products = getProducts();
 		final Random random = new Random();
-		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		final ProductResponse product = products.get(random.nextInt(PAGE_SIZE));
 
 		final int quantity = 2;
 		final ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
@@ -105,7 +107,7 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		// selecting a random product
 		final List<ProductResponse> products = getProducts();
 		final Random random = new Random();
-		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		final ProductResponse product = products.get(random.nextInt(PAGE_SIZE));
 
 		final int quantity = 2;
 		final ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
@@ -136,7 +138,7 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		// selecting a random product
 		final List<ProductResponse> products = getProducts();
 		final Random random = new Random();
-		ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		ProductResponse product = products.get(random.nextInt(PAGE_SIZE));
 
 		final int quantity = 2;
 		ResultActions creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
@@ -151,7 +153,7 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 
 		confirmOrder(order1Location);
 
-		product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+		product = products.get(random.nextInt(PAGE_SIZE));
 
 		creationActions = doCreateOrder(List.of(Pair.of(product, quantity)));
 		creationActions.andExpect(status().isCreated())
@@ -258,7 +260,7 @@ class FulfillmentIT extends AbstractIntegrationTestBase {
 		final MvcResult result = mockMvc.perform(get(Constants.PRODUCTS_PATH)
 				.accept(MediaType.APPLICATION_JSON)
 				.header(HttpHeaders.AUTHORIZATION, getBearer())
-				.param("size", String.valueOf(ProductIT.PAGE_SIZE))) //$NON-NLS-1$
+				.param("size", String.valueOf(PAGE_SIZE))) //$NON-NLS-1$
 			.andReturn();
 		final String content = result.getResponse().getContentAsString();
 		final JsonNode root = objectMapper.readTree(content);

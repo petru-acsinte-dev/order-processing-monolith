@@ -48,7 +48,6 @@ import spring.orders.demo.orders.repositories.OrderRepository;
 import spring.orders.demo.orders.repositories.ProductRepository;
 import spring.orders.demo.security.SecurityUtils;
 import spring.orders.demo.ship.events.OrderConfirmedEvent;
-import spring.orders.demo.ship.events.OrderShippedEvent;
 import spring.orders.demo.users.entities.CustomerUser;
 import spring.orders.demo.users.exceptions.UnauthorizedOperationException;
 import spring.orders.demo.users.exceptions.UserNotFoundException;
@@ -153,7 +152,6 @@ public class OrderService {
 		final Order order = orderRepository.findByExternalId(orderExternalId)
 				.orElseThrow(() -> new OrderNotFoundException(orderExternalId));
 
-		// FIXME: The shipped status should be set by an event
 		if (Status.SHIPPED == newOrderStatus) {
 			SecurityUtils.confirmAdminRole();
 		} else {
@@ -167,10 +165,8 @@ public class OrderService {
 
 		order.setStatus(new OrderStatus(newOrderStatus.getId(), newOrderStatus.name()));
 
-		switch(newOrderStatus) {
-		case CONFIRMED -> publisher.publishEvent(new OrderConfirmedEvent(order.getExternalId()));
-		case SHIPPED -> publisher.publishEvent(new OrderShippedEvent(order.getExternalId()));
-		default -> Status.CANCELLED.name(); // no-op
+		if (Status.CONFIRMED == newOrderStatus) {
+			publisher.publishEvent(new OrderConfirmedEvent(order.getExternalId()));
 		}
 
 		return mapper.toInfo(order);

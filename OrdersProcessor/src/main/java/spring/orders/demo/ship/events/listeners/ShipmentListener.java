@@ -2,10 +2,9 @@ package spring.orders.demo.ship.events.listeners;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.annotation.Transactional;
 
 import spring.orders.demo.ship.events.OrderFulfilledEvent;
 import spring.orders.demo.ship.services.ShipmentService;
@@ -21,8 +20,8 @@ public class ShipmentListener {
 		this.service = service;
 	}
 
-	@Async
-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	@EventListener
+	@Transactional
 	public void handle(OrderFulfilledEvent event) {
 		try {
 			service.createShipment(event.orderExternalId());
