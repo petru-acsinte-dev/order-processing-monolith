@@ -1,14 +1,15 @@
-package spring.orders.demo.users.controllers;
+package spring.orders.demo.response;
 
 import java.util.List;
+import java.util.function.Function;
+
+import org.springframework.data.domain.Page;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Schema;
-import spring.orders.demo.users.dto.CustomerUserResponse;
 
-public class PagedCustomerUserResponse {
-	@ArraySchema(schema = @Schema(implementation = CustomerUserResponse.class))
-	private List<CustomerUserResponse> content;
+public class PagedResponse<T> {
+	@ArraySchema
+	private List<T> content;
 
 	private int totalPages;
 	private long totalElements;
@@ -17,10 +18,22 @@ public class PagedCustomerUserResponse {
 	private boolean first;
 	private boolean last;
 
-	public List<CustomerUserResponse> getContent() {
+	public static <T, R> PagedResponse<R> from(Page<T> page, Function<T, R> mapper) {
+        final PagedResponse<R> response = new PagedResponse<>();
+        response.content = page.getContent().stream().map(mapper).toList();
+        response.totalPages = page.getTotalPages();
+        response.totalElements = page.getTotalElements();
+        response.number = page.getNumber();
+        response.size = page.getSize();
+        response.first = page.isFirst();
+        response.last = page.isLast();
+        return response;
+    }
+
+	public List<T> getContent() {
 		return content;
 	}
-	public void setContent(List<CustomerUserResponse> content) {
+	public void setContent(List<T> content) {
 		this.content = content;
 	}
 	public int getTotalPages() {

@@ -3,6 +3,7 @@ package spring.orders.demo.orders.controllers;
 import java.net.URI;
 import java.util.UUID;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,6 +33,8 @@ import spring.orders.demo.orders.dto.CreateProductRequest;
 import spring.orders.demo.orders.dto.ProductResponse;
 import spring.orders.demo.orders.dto.UpdateProductRequest;
 import spring.orders.demo.orders.services.ProductService;
+import spring.orders.demo.response.PagedResponse;
+import spring.orders.demo.response.ResponseUtils;
 
 @Tag (name = "Products controller", description = "Operations related to products management")
 @RestController
@@ -46,18 +49,24 @@ public class ProductController {
 
 	@GetMapping
 	@Operation (summary = "Lists products",
-			description = "Lists products present in the system.")
+				description = "Lists products present in the system.")
 	@ApiResponse(responseCode = "200",
-				content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-						array = @ArraySchema(schema = @Schema(implementation = ProductResponse.class))))
+				headers = @Header(
+		            name = "Link",
+		            description = "Pagination links with rel=next and rel=prev",
+		            required = false))
 	@ApiResponse (responseCode = "403",
 				description = "User does not have the required priviledges",
 				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
-	public Page<ProductResponse> getAvailableProducts(Pageable pageable) {
-		return service.getProducts(pageable);
+	public ResponseEntity<PagedResponse<ProductResponse>> getAvailableProducts(	@ParameterObject
+																				@Parameter(required = false)
+																				Pageable pageable) {
+		final Page<ProductResponse> page = service.getProducts(pageable);
+
+		return ResponseUtils.getPagedResponse(page);
 	}
 
 	@PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE)

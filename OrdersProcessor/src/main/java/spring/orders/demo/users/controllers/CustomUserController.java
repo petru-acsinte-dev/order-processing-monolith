@@ -2,13 +2,10 @@ package spring.orders.demo.users.controllers;
 
 import java.net.URI;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +29,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import spring.orders.demo.constants.Constants;
+import spring.orders.demo.response.PagedResponse;
+import spring.orders.demo.response.ResponseUtils;
 import spring.orders.demo.users.dto.CreateCustomerUserRequest;
 import spring.orders.demo.users.dto.CustomerUserResponse;
 import spring.orders.demo.users.dto.UpdateCustomerUserRequest;
@@ -53,9 +52,6 @@ public class CustomUserController {
 			description = "Lists users present in the system. Requires admin priviledges.")
 	@ApiResponse (responseCode = "200",
 				description = "Users retrieved successfully",
-				content = @Content(
-						mediaType = MediaType.APPLICATION_JSON_VALUE,
-						schema = @Schema(implementation = PagedCustomerUserResponse.class)),
 				headers = @Header(
 			            name = "Link",
 			            description = "Pagination links with rel=next and rel=prev",
@@ -66,10 +62,12 @@ public class CustomUserController {
 	@ApiResponse (responseCode = "401",
 				description = "Unauthorized user request",
 				content = @Content(schema = @Schema(hidden = true)))
-	public ResponseEntity<Page<CustomerUserResponse>> getUsers(@ParameterObject Pageable pageable) {
+	public ResponseEntity<PagedResponse<CustomerUserResponse>> getUsers(@ParameterObject
+																		@Parameter(required = false)
+																		Pageable pageable) {
 		final Page<CustomerUserResponse> page = service.findUsers(pageable);
 
-		return getPagedResponse(page);
+		return ResponseUtils.getPagedResponse(page);
 	}
 
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -138,40 +136,6 @@ public class CustomUserController {
 		return ResponseEntity
 			.noContent()
 			.build();
-	}
-
-	private static ResponseEntity<Page<CustomerUserResponse>> getPagedResponse(Page<CustomerUserResponse> page) {
-		final Sort sortBy = page.getSort();
-		final String nextLink = (page.hasNext()) ?
-				buildLink(page.getNumber() + 1, page.getSize(), sortBy) : null;
-        final String prevLink = (page.hasPrevious()) ?
-        		buildLink(page.getNumber() - 1, page.getSize(), sortBy) : null;
-
-        final HttpHeaders headers = new HttpHeaders();
-        if (null != nextLink) {
-        	headers.add(Constants.LINK_RESPONSE_HEADER,
-        		String.format(Constants.LINK_NEXT_TEMPLATE, nextLink));
-        }
-        if (null != prevLink) {
-        	headers.add(Constants.LINK_RESPONSE_HEADER,
-        		String.format(Constants.LINK_PREV_TEMPLATE, prevLink));
-        }
-        return new ResponseEntity<>(page, headers, HttpStatus.OK);
-	}
-
-	private static String buildLink(int pageNo, int pageSize, Sort sortBy) {
-		if (null == sortBy) {
-			return String.format(Constants.PAGE_LINK_TEMPLATE, Constants.USERS_PATH, pageNo, pageSize);
-		}
-		return String.format(Constants.PAGE_LINK_SORT_TEMPLATE, Constants.USERS_PATH, pageNo, pageSize, getSortParams(sortBy));
-	}
-
-	private static String getSortParams(Sort sortBy) {
-		return sortBy.stream()
-				.map(f -> String.format("&sort=%s,%s",  //$NON-NLS-1$
-										f.getProperty(),
-										f.getDirection().name().toLowerCase()))
-				.collect(Collectors.joining());
 	}
 
 }

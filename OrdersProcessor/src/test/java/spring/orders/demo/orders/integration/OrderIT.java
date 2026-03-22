@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.jsonwebtoken.lang.Collections;
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.order.Status;
 import spring.orders.demo.orders.dto.CreateOrderRequest;
@@ -269,6 +270,9 @@ class OrderIT extends AbstractIntegrationTestBase {
 		final List<ProductResponse> products = getProducts();
 		final Random random = new Random();
 		final ProductResponse product = products.get(random.nextInt(ProductIT.PAGE_SIZE));
+
+		doCreateOrder(Collections.emptyList())
+			.andExpect(status().isBadRequest());
 
 		final int quantity = 2;
 		final ResultActions resultActions = doCreateOrder(List.of(Pair.of(product, quantity)));

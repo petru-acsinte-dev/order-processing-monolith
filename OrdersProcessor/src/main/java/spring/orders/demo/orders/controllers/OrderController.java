@@ -3,7 +3,7 @@ package spring.orders.demo.orders.controllers;
 import java.net.URI;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,10 +19,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.constants.order.Status;
@@ -31,7 +33,10 @@ import spring.orders.demo.orders.dto.OrderInfo;
 import spring.orders.demo.orders.dto.OrderResponse;
 import spring.orders.demo.orders.dto.UpdateOrderRequest;
 import spring.orders.demo.orders.services.OrderService;
+import spring.orders.demo.response.PagedResponse;
+import spring.orders.demo.response.ResponseUtils;
 
+@Tag (name = "Orders controller", description = "Operations related to product orders")
 @RestController
 @RequestMapping(path = Constants.ORDERS_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
 public class OrderController {
@@ -155,17 +160,21 @@ public class OrderController {
 	@Operation (summary = "Lists orders",
 				description = "Lists available orders, newest first")
 	@ApiResponse(responseCode = "200",
-				content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-						array = @ArraySchema(schema = @Schema(implementation = OrderInfo.class))))
+				headers = @Header(
+		            name = "Link",
+		            description = "Pagination links with rel=next and rel=prev",
+		            required = false))
 	@ApiResponse (responseCode = "403",
 				description = "User does not have the required priviledges",
 				content = @Content(schema = @Schema(hidden = true)))
 	@ApiResponse (responseCode = "404",
 				description = "The specified optional owner was not found",
 				content = @Content(schema = @Schema(hidden = true)))
-	public Page<OrderInfo> getOrders(
+	public ResponseEntity<PagedResponse<OrderInfo>> getOrders(
 			@RequestParam(required = false) UUID ownerId,
-			Pageable pageable) {
-		return service.getOrders(ownerId, pageable);
+			@ParameterObject @Parameter(required = false) Pageable pageable) {
+		final var page = service.getOrders(ownerId, pageable);
+
+		return ResponseUtils.getPagedResponse(page);
 	}
 }

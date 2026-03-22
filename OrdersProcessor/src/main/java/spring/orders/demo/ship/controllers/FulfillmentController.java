@@ -2,7 +2,7 @@ package spring.orders.demo.ship.controllers;
 
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,6 +22,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import spring.orders.demo.constants.Constants;
 import spring.orders.demo.orders.dto.OrderInfo;
+import spring.orders.demo.response.PagedResponse;
+import spring.orders.demo.response.ResponseUtils;
 import spring.orders.demo.security.SecurityUtils;
 import spring.orders.demo.ship.dto.FulfillmentResponse;
 import spring.orders.demo.ship.services.FulfillmentService;
@@ -37,17 +41,23 @@ public class FulfillmentController {
 
 	@GetMapping
 	@Operation (summary = "Lists fulfillments",
-			description = "Lists available fulfillments, newest first. Requires admin priviledges.")
+				description = "Lists available fulfillments, newest first. Requires admin priviledges.")
 	@ApiResponse(responseCode = "200",
-			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-					array = @ArraySchema(schema = @Schema(implementation = FulfillmentResponse.class))))
+				headers = @Header(
+		            name = "Link",
+		            description = "Pagination links with rel=next and rel=prev",
+		            required = false))
 	@ApiResponse (responseCode = "403",
 			description = "User does not have the required priviledges",
 			content = @Content(schema = @Schema(hidden = true)))
-	public Page<FulfillmentResponse> getFulfillments(Pageable pageable) {
+	public ResponseEntity<PagedResponse<FulfillmentResponse>> getFulfillments(	@ParameterObject
+																				@Parameter(required = false)
+																				Pageable pageable) {
 		SecurityUtils.confirmAdminRole();
 
-		return service.getFulfillments(pageable);
+		final var page = service.getFulfillments(pageable);
+
+		return ResponseUtils.getPagedResponse(page);
 	}
 
 	@GetMapping("/{orderId}")

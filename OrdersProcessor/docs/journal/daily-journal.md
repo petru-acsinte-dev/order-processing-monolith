@@ -162,3 +162,4 @@ OrderProcessor - Daily journal
 -
 - readme update
 - increased test coverage
+- made controllers more swagger friendly
