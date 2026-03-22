@@ -154,5 +154,11 @@ OrderProcessor - Daily journal
 
 2026-03-21
 -
-- enabling JaCoCo
+- enabled JaCoCo
 - tidying up controllers API spec
+- increased test coverage
+
+2026-03-22
+-
+- readme update
+- increased test coverage
