@@ -22,9 +22,9 @@ testing, and a working CI/CD pipeline — before any architectural decomposition
 - Testcontainers · JaCoCo · OpenAPI/Swagger · Docker · GitHub Actions
 
 ### Project Documentation
-- [User Story](docs/UserStory.md)
-- [Design Document](docs/DesignDoc.md)
-- [Project Journal](docs/journal/daily-journal.md)
+- [User Story](https://github.com/petru-acsinte-dev/order-processing-monolith/blob/master/OrdersProcessor/docs/UserStory.md)
+- [Design Document](https://github.com/petru-acsinte-dev/order-processing-monolith/blob/master/OrdersProcessor/docs/DesignDoc.md)
+- [Project Journal](https://github.com/petru-acsinte-dev/order-processing-monolith/blob/master/OrdersProcessor/docs/journal/daily-journal.md)
 
 ### Evolution
 This monolith has been decomposed into three independent microservices:
